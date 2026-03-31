@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>核桃OJ小组快速导入</title>
+  <style>
+    :root {
+      --primary: #4a6cf7;
+      --primary-hover: #3b5de7;
+      --danger: #e74c3c;
+      --success: #27ae60;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --text-secondary: #64748b;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .app-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .header-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 20px 24px 0;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .card-body {
+      padding: 20px 24px 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      color: var(--text);
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
+    }
+
+    textarea::placeholder {
+      color: #a0aec0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+    .btn-danger { color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-bar {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-bar.show { display: flex; }
+
+    .status-bar.success {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-bar.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .current-list {
+      margin-top: 16px;
+    }
+
+    .current-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .current-list-header span {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .current-list-header .count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .current-list-body {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fafbfc;
+    }
+
+    .current-list-body .empty {
+      padding: 20px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .current-list-body ul {
+      list-style: none;
+      padding: 4px 0;
+      margin: 0;
+    }
+
+    .current-list-body li {
+      padding: 5px 14px;
+      font-size: 13px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .current-list-body li:last-child {
+      border-bottom: none;
+    }
+
+    .current-list-body li .row-num {
+      color: #94a3b8;
+      margin-right: 8px;
+      font-size: 12px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #1a202c;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>核桃OJ小组快速导入</h1>
+  <span class="header-hint">批量写入 UserID 到 group.xlsx</span>
+</div>
+
+<div class="main-content">
+  <div class="card">
+    <div class="card-header">
+      <h2>导入 UserID</h2>
+      <p>每行一个 UserID，点击「写入」后自动保存到 group.xlsx 的 A2 开始的行</p>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="useridInput">UserID 列表（每行一个）</label>
+        <textarea id="useridInput" placeholder="在此粘贴 UserID，每行一个&#10;例如：&#10;10001&#10;10002&#10;10003"></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="writeToExcel()">写入</button>
+        <button class="btn btn-danger" onclick="clearInput()">清空输入</button>
+        <button class="btn" onclick="loadCurrent()">刷新列表</button>
+      </div>
+
+      <div class="status-bar" id="statusBar">
+        <span id="statusIcon"></span>
+        <span id="statusText"></span>
+      </div>
+
+      <div class="current-list">
+        <div class="current-list-header">
+          <span>当前 Excel 中的 UserID</span>
+          <span class="count" id="userCount">0 条</span>
+        </div>
+        <div class="current-list-body" id="currentListBody">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  const icon = document.getElementById('statusIcon');
+  const text = document.getElementById('statusText');
+  bar.className = 'status-bar show ' + type;
+  icon.textContent = type === 'success' ? '✓' : '✗';
+  text.textContent = msg;
+}
+
+function hideStatus() {
+  document.getElementById('statusBar').className = 'status-bar';
+}
+
+function parseUserIds() {
+  const text = document.getElementById('useridInput').value.trim();
+  if (!text) return [];
+  return text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+}
+
+async function loadCurrent() {
+  hideStatus();
+  try {
+    const resp = await fetch('/api/data');
+    const data = await resp.json();
+    if (data.ok) {
+      renderList(data.ids);
+    } else {
+      renderList([]);
+      showStatus('error', '读取失败: ' + (data.error || '未知错误'));
+    }
+  } catch (e) {
+    renderList([]);
+    showStatus('error', '无法连接服务器，请确认 server.py 已启动');
+  }
+}
+
+function renderList(ids) {
+  const body = document.getElementById('currentListBody');
+  const count = document.getElementById('userCount');
+  count.textContent = ids.length + ' 条';
+  if (ids.length === 0) {
+    body.innerHTML = '<div class="empty">暂无数据</div>';
+    return;
+  }
+  let html = '<ul>';
+  ids.forEach((id, i) => {
+    html += `<li><span class="row-num">${i + 1}.</span>${escapeHtml(id)}</li>`;
+  });
+  html += '</ul>';
+  body.innerHTML = html;
+}
+
+async function writeToExcel() {
+  hideStatus();
+  const ids = parseUserIds();
+  if (ids.length === 0) {
+    showStatus('error', '请先输入 UserID');
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      showStatus('success', `已写入 ${data.count} 条 UserID 到 group.xlsx`);
+      showToast('写入成功');
+      loadCurrent();
+    } else {
+      showStatus('error', '写入失败: ' + (data.error || '未知错误'));
+    }
+  } catch (e) {
+    showStatus('error', '无法连接服务器');
+  }
+}
+
+function clearInput() {
+  document.getElementById('useridInput').value = '';
+  hideStatus();
+  showToast('已清空输入');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', loadCurrent);
+</script>
+
+</body>
+</html>

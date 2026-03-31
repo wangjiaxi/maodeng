@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>猫凳题目图片生成工具</title>
+  <script src="html2canvas.min.js"></script>
+  <style>
+    /* 方正准圆 + Consolas 组合字体：中文用方正准圆，英文/数字/符号用 Consolas */
+    @font-face {
+      font-family: 'ZhunYuan-Consolas';
+      src: local('Consolas'), local('Consolas Regular');
+      unicode-range: U+0000-007F, U+0080-00FF, U+0100-017F, U+0180-024F, U+2190-21FF, U+2200-22FF, U+25A0-25FF;
+      font-weight: normal;
+    }
+    @font-face {
+      font-family: 'ZhunYuan-Consolas';
+      src: local('Consolas Bold');
+      unicode-range: U+0000-007F, U+0080-00FF, U+0100-017F, U+0180-024F, U+2190-21FF, U+2200-22FF, U+25A0-25FF;
+      font-weight: bold;
+    }
+    @font-face {
+      font-family: 'ZhunYuan-Consolas';
+      src: local('FZY3JW--GB1-0'), local('方正准圆简体');
+      unicode-range: U+4E00-9FFF, U+3400-4DBF, U+3000-303F, U+3040-309F, U+30A0-30FF, U+31C0-31EF, U+2000-206F, U+FF00-FFEF, U+FE30-FE4F;
+      font-weight: normal;
+    }
+    @font-face {
+      font-family: 'ZhunYuan-Consolas';
+      src: local('FZY3JW--GB1-0'), local('方正准圆简体');
+      unicode-range: U+4E00-9FFF, U+3400-4DBF, U+3000-303F, U+3040-309F, U+30A0-30FF, U+31C0-31EF, U+2000-206F, U+FF00-FFEF, U+FE30-FE4F;
+      font-weight: bold;
+    }
+
+    /* 方正粗圆 + Consolas 组合字体 */
+    @font-face {
+      font-family: 'CuYuan-Consolas';
+      src: local('Consolas'), local('Consolas Regular');
+      unicode-range: U+0000-007F, U+0080-00FF, U+0100-017F, U+0180-024F, U+2190-21FF, U+2200-22FF, U+25A0-25FF;
+      font-weight: normal;
+    }
+    @font-face {
+      font-family: 'CuYuan-Consolas';
+      src: local('Consolas Bold');
+      unicode-range: U+0000-007F, U+0080-00FF, U+0100-017F, U+0180-024F, U+2190-21FF, U+2200-22FF, U+25A0-25FF;
+      font-weight: bold;
+    }
+    @font-face {
+      font-family: 'CuYuan-Consolas';
+      src: local('FZY4JW--GB1-0'), local('方正粗圆简体');
+      unicode-range: U+4E00-9FFF, U+3400-4DBF, U+3000-303F, U+3040-309F, U+30A0-30FF, U+31C0-31EF, U+2000-206F, U+FF00-FFEF, U+FE30-FE4F;
+      font-weight: normal;
+    }
+    @font-face {
+      font-family: 'CuYuan-Consolas';
+      src: local('FZY4JW--GB1-0'), local('方正粗圆简体');
+      unicode-range: U+4E00-9FFF, U+3400-4DBF, U+3000-303F, U+3040-309F, U+30A0-30FF, U+31C0-31EF, U+2000-206F, U+FF00-FFEF, U+FE30-FE4F;
+      font-weight: bold;
+    }
+
+    :root {
+      --primary: #4a6cf7;
+      --primary-hover: #3b5de7;
+      --danger: #e74c3c;
+      --danger-hover: #c0392b;
+      --success: #27ae60;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --text-secondary: #64748b;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .app-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .header-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .app-layout {
+      display: flex;
+      height: calc(100vh - 53px);
+      overflow: hidden;
+    }
+
+    /* Left Panel */
+    .left-panel {
+      width: 360px;
+      min-width: 240px;
+      max-width: 600px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Resizer handle */
+    .panel-resizer {
+      width: 6px;
+      cursor: col-resize;
+      background: transparent;
+      position: relative;
+      flex-shrink: 0;
+      z-index: 10;
+      transition: background 0.15s;
+    }
+    .panel-resizer:hover,
+    .panel-resizer.active {
+      background: var(--primary);
+      opacity: 0.4;
+    }
+    .panel-resizer::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 30px;
+      background: #cbd5e1;
+      border-radius: 1px;
+      transition: background 0.15s;
+    }
+    .panel-resizer:hover::after,
+    .panel-resizer.active::after {
+      background: var(--primary);
+    }
+
+    .panel-toolbar {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      background: #fafbfc;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    .btn-danger { color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+
+    .element-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .element-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      background: var(--card-bg);
+      transition: box-shadow 0.15s;
+    }
+
+    .element-item:hover { box-shadow: var(--shadow-md); }
+
+    .element-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .element-item-header.expanded {
+      border-bottom-color: var(--border);
+    }
+
+    .element-item-header .label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .element-item-header .label .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .tag-text { background: var(--primary); }
+    .tag-image { background: var(--success); }
+
+    .element-item-header .arrow {
+      transition: transform 0.2s;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .element-item-header.expanded .arrow { transform: rotate(180deg); }
+
+    .element-item-body {
+      padding: 0 12px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease, padding 0.25s ease;
+    }
+
+    .element-item-body.expanded {
+      max-height: 600px;
+      padding: 12px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .form-group input[type="number"],
+    .form-group input[type="text"],
+    .form-group textarea {
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+
+    .color-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .color-input-wrap input[type="color"] {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px;
+      cursor: pointer;
+      background: none;
+    }
+
+    .color-input-wrap input[type="text"] {
+      flex: 1;
+    }
+
+    .img-preview-thumb {
+      margin-top: 6px;
+      max-width: 100%;
+      max-height: 80px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      object-fit: contain;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #e8ecf1;
+    }
+
+    .save-bar {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .canvas-width-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .canvas-width-control input {
+      width: 70px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 13px;
+      text-align: center;
+      outline: none;
+    }
+
+    .canvas-width-control input:focus {
+      border-color: var(--primary);
+    }
+
+    .preview-wrapper {
+      padding: 0;
+      display: inline-block;
+    }
+
+    /* Stash (clipboard) area */
+    .stash-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .stash-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .stash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .stash-item {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--card-bg);
+      transition: box-shadow 0.15s;
+    }
+    .stash-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .stash-item img {
+      width: 100%;
+      display: block;
+      cursor: pointer;
+    }
+    .stash-item-actions {
+      display: flex;
+      gap: 0;
+      background: var(--card-bg);
+    }
+    .stash-item-actions button {
+      flex: 1;
+      padding: 4px 0;
+      border: none;
+      background: none;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .stash-item-actions button:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+    .stash-item-actions button.stash-delete:hover {
+      background: #fef2f2;
+      color: var(--danger);
+    }
+    .stash-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+      padding: 16px 0;
+    }
+
+    #canvas {
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-element {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+    }
+
+    .canvas-element:hover {
+      outline: 2px dashed var(--primary);
+      outline-offset: 1px;
+    }
+
+    .canvas-element.selected {
+      outline: 2px solid var(--primary);
+      outline-offset: 1px;
+    }
+
+    .canvas-element img {
+      display: block;
+      max-width: none;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      gap: 8px;
+    }
+
+    .empty-state .icon { font-size: 36px; opacity: 0.4; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #1a202c;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Canvas bg options */
+    .canvas-bg-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .canvas-bg-option input[type="color"] {
+      width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 4px; padding: 2px; cursor: pointer; background: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>猫凳题目图片生成工具</h1>
+  <span class="header-hint">添加文本和图片元素，拖拽调整位置，导出为图片</span>
+</div>
+
+<div class="app-layout">
+  <!-- Left Panel: Editor Controls -->
+  <div class="left-panel">
+    <div class="panel-toolbar">
+      <button class="btn btn-primary" onclick="addText()">+ 文本</button>
+      <button class="btn btn-primary" onclick="addImage()">+ 图片</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-sm btn-danger" onclick="clearAll()">清空全部</button>
+    </div>
+    <div class="element-list" id="elementList">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">+</div>
+        <span>点击上方按钮添加元素</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resizer -->
+  <div class="panel-resizer" id="panelResizer"></div>
+
+  <!-- Right Panel: Preview -->
+  <div class="right-panel">
+    <div class="save-bar">
+      <div class="canvas-bg-option">
+        <label>背景:</label>
+        <input type="color" id="canvasBgColor" value="#ffffff" onchange="updateCanvasBg()">
+      </div>
+      <div class="canvas-width-control">
+        <label>宽度:</label>
+        <input type="number" id="canvasWidthInput" value="1000" min="200" max="3000" step="10" onchange="updateCanvasSize()">
+        <span>px</span>
+      </div>
+      <div class="canvas-width-control">
+        <label>高度:</label>
+        <input type="number" id="canvasHeightInput" value="" min="100" max="5000" step="10" placeholder="自适应" onchange="updateCanvasHeight()">
+        <span>px</span>
+      </div>
+      <button class="btn btn-sm" onclick="autoFitHeight()" title="根据内容自动调整高度">自适应高度</button>
+      <button class="btn btn-sm" onclick="stashCanvas()" title="暂存当前画布到剪贴板">暂存</button>
+      <button class="btn btn-primary" onclick="saveToImage()">
+        保存到本地
+      </button>
+    </div>
+    <div class="preview-wrapper">
+      <div id="canvas" style="width:1000px; min-height:500px;"></div>
+    </div>
+    <div class="stash-section">
+      <div class="stash-section-header">
+        <span>剪贴板</span>
+        <span id="stashCount" style="font-weight:normal;color:var(--text-secondary);font-size:12px;"></span>
+      </div>
+      <div class="stash-grid" id="stashGrid">
+        <div class="stash-empty" id="stashEmpty">点击「暂存」保存当前画布快照</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+
+<script>
+let elements = [];
+let selectedId = null;
+let nextId = 1;
+let dragState = null;
+let pendingImageCallback = null;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// --- Element CRUD ---
+
+function addText() {
+  const el = {
+    id: nextId++,
+    type: 'text',
+    text: '请输入文本内容',
+    x: 5,
+    y: 5 + elements.filter(e => e.type === 'text').length * 40,
+    fontSize: 28,
+    color: '#333333',
+    bold: false,
+    fontFamily: 'cuyuan',
+    expanded: true
+  };
+  elements.push(el);
+  renderList();
+  renderCanvas();
+}
+
+function addImage() {
+  const el = {
+    id: nextId++,
+    type: 'image',
+    src: null,
+    x: 5,
+    y: 50 + elements.filter(e => e.type === 'image').length * 60,
+    originalWidth: 300,
+    originalHeight: 200,
+    scale: 50,
+    width: 150,
+    height: 100,
+    expanded: true
+  };
+  elements.push(el);
+  selectedId = el.id;
+  renderList();
+  renderCanvas();
+}
+
+function uploadImageFor(id) {
+  pendingImageCallback = id;
+  document.getElementById('fileInput').click();
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const targetId = pendingImageCallback;
+  if (targetId == null) { e.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const img = new Image();
+    img.onload = function() {
+      const el = elements.find(e => e.id === targetId);
+      if (el) {
+        el.src = ev.target.result;
+        el.originalWidth = img.naturalWidth;
+        el.originalHeight = img.naturalHeight;
+        el.scale = 100;
+        el.width = img.naturalWidth;
+        el.height = img.naturalHeight;
+      }
+      pendingImageCallback = null;
+      renderList();
+      renderCanvas();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeElement(id) {
+  elements = elements.filter(e => e.id !== id);
+  if (selectedId === id) selectedId = null;
+  renderList();
+  renderCanvas();
+}
+
+function moveElement(id, dir) {
+  const idx = elements.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= elements.length) return;
+  [elements[idx], elements[newIdx]] = [elements[newIdx], elements[idx]];
+  renderList();
+  renderCanvas();
+}
+
+function duplicateElement(id) {
+  const src = elements.find(e => e.id === id);
+  if (!src) return;
+  const el = { ...src, id: nextId++, x: src.x + 20, y: src.y + 20, expanded: true };
+  elements.push(el);
+  renderList();
+  renderCanvas();
+}
+
+function clearAll() {
+  if (elements.length === 0) return;
+  elements = [];
+  selectedId = null;
+  renderList();
+  renderCanvas();
+  showToast('已清空所有元素');
+}
+
+// --- Toggle expand ---
+
+function toggleExpand(id) {
+  const el = elements.find(e => e.id === id);
+  if (el) el.expanded = !el.expanded;
+  renderList();
+}
+
+// --- Update element property ---
+
+function updateProp(id, prop, value) {
+  const el = elements.find(e => e.id === id);
+  if (!el) return;
+  if (prop === 'fontSize' || prop === 'x' || prop === 'y') {
+    value = parseInt(value) || 0;
+  }
+  el[prop] = value;
+  renderCanvas();
+}
+
+function updateColor(id, value) {
+  const el = elements.find(e => e.id === id);
+  if (!el) return;
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+    el.color = value;
+    const colorPicker = document.getElementById('colorPicker_' + id);
+    if (colorPicker) colorPicker.value = value;
+    renderCanvas();
+  }
+}
+
+function updateColorFromPicker(id, value) {
+  const el = elements.find(e => e.id === id);
+  if (!el) return;
+  el.color = value;
+  const colorText = document.getElementById('colorText_' + id);
+  if (colorText) colorText.value = value;
+  renderCanvas();
+}
+
+// --- Render left panel list ---
+
+function renderList() {
+  const list = document.getElementById('elementList');
+  const empty = document.getElementById('emptyState');
+
+  if (elements.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(createEmptyState());
+    return;
+  }
+
+  let html = '';
+  elements.forEach((el, idx) => {
+    const expanded = el.expanded ? 'expanded' : '';
+    if (el.type === 'text') {
+      html += `
+        <div class="element-item">
+          <div class="element-item-header ${expanded}" onclick="toggleExpand(${el.id})">
+            <div class="label">
+              <span class="tag tag-text">T</span>
+              <span>${escHtml(el.text.substring(0, 12))}${el.text.length > 12 ? '...' : ''}</span>
+            </div>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="element-item-body ${expanded}">
+            <div class="form-group" style="margin-bottom:10px">
+              <label>文本内容</label>
+              <textarea oninput="updateProp(${el.id},'text',this.value)">${escHtml(el.text)}</textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>X 坐标</label>
+                <input type="number" value="${el.x}" onchange="updateProp(${el.id},'x',this.value)">
+              </div>
+              <div class="form-group">
+                <label>Y 坐标</label>
+                <input type="number" value="${el.y}" onchange="updateProp(${el.id},'y',this.value)">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>字体大小 (px)</label>
+                <input type="number" value="${el.fontSize}" min="8" max="200" onchange="updateProp(${el.id},'fontSize',this.value)">
+              </div>
+              <div class="form-group">
+                <label>字体</label>
+                <select style="padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;outline:none;width:100%;background:var(--card-bg);" onchange="updateProp(${el.id},'fontFamily',this.value)">
+                  <option value="zhunyuan"${el.fontFamily === 'zhunyuan' ? ' selected' : ''}>方正准圆 + Consolas</option>
+                  <option value="cuyuan"${el.fontFamily === 'cuyuan' ? ' selected' : ''}>方正粗圆 + Consolas</option>
+                  <option value="zhunyuan_only"${el.fontFamily === 'zhunyuan_only' ? ' selected' : ''}>方正准圆</option>
+                  <option value="consolas"${el.fontFamily === 'consolas' ? ' selected' : ''}>Consolas</option>
+                  <option value="songti"${el.fontFamily === 'songti' ? ' selected' : ''}>宋体</option>
+                  <option value="heiti"${el.fontFamily === 'heiti' ? ' selected' : ''}>黑体</option>
+                  <option value="kaiti"${el.fontFamily === 'kaiti' ? ' selected' : ''}>楷体</option>
+                  <option value="pingfang"${el.fontFamily === 'pingfang' ? ' selected' : ''}>苹方</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>颜色</label>
+                <div class="color-input-wrap">
+                  <input type="color" id="colorPicker_${el.id}" value="${el.color}" onchange="updateColorFromPicker(${el.id},this.value)">
+                  <input type="text" id="colorText_${el.id}" value="${el.color}" onchange="updateColor(${el.id},this.value)" placeholder="#333333">
+                </div>
+              </div>
+            </div>
+            <div class="form-row" style="justify-content:flex-end; gap:4px;">
+              <button class="btn btn-sm" onclick="event.stopPropagation();duplicateElement(${el.id})">复制</button>
+              ${idx > 0 ? `<button class="btn btn-sm" onclick="event.stopPropagation();moveElement(${el.id},-1)">上移</button>` : ''}
+              ${idx < elements.length - 1 ? `<button class="btn btn-sm" onclick="event.stopPropagation();moveElement(${el.id},1)">下移</button>` : ''}
+              <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();removeElement(${el.id})">删除</button>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      const hasSrc = !!el.src;
+      const previewImg = hasSrc
+        ? `<img class="img-preview-thumb" src="${el.src}" alt="preview">`
+        : `<div style="border:2px dashed #cbd5e1;border-radius:4px;padding:16px 0;text-align:center;color:#94a3b8;font-size:13px;">暂未上传图片</div>`;
+      html += `
+        <div class="element-item">
+          <div class="element-item-header ${expanded}" onclick="toggleExpand(${el.id})">
+            <div class="label">
+              <span class="tag tag-image">I</span>
+              <span>图片 #${el.id}${hasSrc ? '' : ' (待上传)'}</span>
+            </div>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="element-item-body ${expanded}">
+            <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:10px;" onclick="event.stopPropagation();uploadImageFor(${el.id})">
+              ${hasSrc ? '更换图片' : '上传图片'}
+            </button>
+            ${previewImg}
+            <div class="form-row" style="margin-top:10px">
+              <div class="form-group">
+                <label>X 坐标</label>
+                <input type="number" value="${el.x}" onchange="updateProp(${el.id},'x',this.value)">
+              </div>
+              <div class="form-group">
+                <label>Y 坐标</label>
+                <input type="number" value="${el.y}" onchange="updateProp(${el.id},'y',this.value)">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>缩放 (%)</label>
+                <input type="number" value="${el.scale}" min="1" max="500" step="1" onchange="updateImageScale(${el.id},this.value)">
+              </div>
+              <div class="form-group">
+                <label>实际尺寸</label>
+                <input type="text" value="${el.width} × ${el.height}" readonly style="background:#f8fafc;color:#64748b;cursor:default;">
+              </div>
+            </div>
+            <div class="form-row" style="justify-content:flex-end; gap:4px;">
+              <button class="btn btn-sm" onclick="event.stopPropagation();duplicateElement(${el.id})">复制</button>
+              ${idx > 0 ? `<button class="btn btn-sm" onclick="event.stopPropagation();moveElement(${el.id},-1)">上移</button>` : ''}
+              ${idx < elements.length - 1 ? `<button class="btn btn-sm" onclick="event.stopPropagation();moveElement(${el.id},1)">下移</button>` : ''}
+              <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();removeElement(${el.id})">删除</button>
+            </div>
+          </div>
+        </div>`;
+    }
+  });
+
+  list.innerHTML = html;
+}
+
+function createEmptyState() {
+  const div = document.createElement('div');
+  div.className = 'empty-state';
+  div.id = 'emptyState';
+  div.innerHTML = '<div class="icon">+</div><span>点击上方按钮添加元素</span>';
+  return div;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// --- Render canvas ---
+
+function renderCanvas() {
+  const canvas = document.getElementById('canvas');
+  let html = '';
+
+  let maxBottom = 100;
+  elements.forEach(el => {
+    if (el.type === 'text') {
+      const fontFamilyMap = {
+        'zhunyuan': "'ZhunYuan-Consolas', 'FZY3JW--GB1-0', '方正准圆简体', Consolas, 'PingFang SC', sans-serif",
+        'cuyuan': "'CuYuan-Consolas', 'FZY4JW--GB1-0', '方正粗圆简体', Consolas, 'PingFang SC', sans-serif",
+        'zhunyuan_only': "'FZY3JW--GB1-0', '方正准圆简体', 'PingFang SC', sans-serif",
+        'consolas': "Consolas, 'Courier New', monospace",
+        'songti': "'SimSun', '宋体', serif",
+        'heiti': "'SimHei', '黑体', sans-serif",
+        'kaiti': "'KaiTi', '楷体', serif",
+        'pingfang': "'PingFang SC', 'Microsoft YaHei', sans-serif"
+      };
+      const ff = fontFamilyMap[el.fontFamily] || fontFamilyMap['zhunyuan'];
+      const style = `
+        left:${el.x}px;
+        top:${el.y}px;
+        font-size:${el.fontSize}px;
+        color:${el.color};
+        font-weight:${el.bold ? 'bold' : 'normal'};
+        white-space:pre-wrap;
+        line-height:1.5;
+        font-family:${ff};
+      `;
+      const estimatedHeight = el.text.split('\n').length * el.fontSize * 1.5;
+      const estimatedWidth = el.text.length * el.fontSize * 0.7;
+      const bottom = el.y + estimatedHeight;
+      if (bottom > maxBottom) maxBottom = bottom;
+      const right = el.x + estimatedWidth;
+      if (right > 1000) maxBottom += 30;
+      html += `<div class="canvas-element${selectedId === el.id ? ' selected' : ''}" data-id="${el.id}" style="${style}">${escHtml(el.text)}</div>`;
+    } else {
+      const w = el.width || 300;
+      const h = el.height || 200;
+      const bottom = el.y + h;
+      if (bottom > maxBottom) maxBottom = bottom;
+      if (el.src) {
+        html += `<div class="canvas-element${selectedId === el.id ? ' selected' : ''}" data-id="${el.id}" style="left:${el.x}px;top:${el.y}px;width:${w}px;height:${h}px;"><img src="${el.src}" style="width:100%;height:100%;display:block;"><div class="resize-handle" data-resize-id="${el.id}" style="position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,var(--primary) 50%);opacity:0.6;border-radius:0 0 0 2px;"></div></div>`;
+      } else {
+        html += `<div class="canvas-element${selectedId === el.id ? ' selected' : ''}" data-id="${el.id}" data-placeholder="true" style="left:${el.x}px;top:${el.y}px;width:${w}px;height:${h}px;border:2px dashed #94a3b8;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:rgba(148,163,184,0.06);"><span style="font-size:32px;color:#94a3b8;pointer-events:none;">+</span><span style="font-size:13px;color:#94a3b8;pointer-events:none;">点击左侧上传图片</span><span style="font-size:11px;color:#b0bec5;pointer-events:none;">${w} × ${h}</span></div>`;
+      }
+    }
+  });
+
+  canvas.innerHTML = html;
+
+  // Height logic
+  const fixedH = parseInt(document.getElementById('canvasHeightInput').value);
+  if (fixedH && fixedH > 0) {
+    canvas.style.minHeight = '';
+    canvas.style.height = fixedH + 'px';
+  } else {
+    canvas.style.height = '';
+    // Use actual DOM measurement for accurate text height
+    let actualMaxBottom = 0;
+    canvas.querySelectorAll('.canvas-element').forEach(domEl => {
+      const id = parseInt(domEl.dataset.id);
+      const srcEl = elements.find(e => e.id === id);
+      if (srcEl && srcEl.type === 'text') {
+        const b = srcEl.y + domEl.offsetHeight;
+        if (b > actualMaxBottom) actualMaxBottom = b;
+      }
+    });
+    canvas.style.minHeight = Math.max(10, actualMaxBottom + 5) + 'px';
+  }
+}
+
+// --- Canvas bg & size ---
+
+function updateCanvasBg() {
+  const color = document.getElementById('canvasBgColor').value;
+  document.getElementById('canvas').style.background = color;
+}
+
+function updateCanvasSize() {
+  const w = parseInt(document.getElementById('canvasWidthInput').value) || 1000;
+  document.getElementById('canvas').style.width = w + 'px';
+  renderCanvas();
+}
+
+function updateImageScale(id, val) {
+  const el = elements.find(e => e.id === id);
+  if (!el || el.type !== 'image') return;
+  let s = parseFloat(val);
+  if (isNaN(s) || s <= 0) s = 100;
+  el.scale = s;
+  el.width = Math.round(el.originalWidth * s / 100);
+  el.height = Math.round(el.originalHeight * s / 100);
+  renderList();
+  renderCanvas();
+}
+
+function updateCanvasHeight() {
+  renderCanvas();
+}
+
+function autoFitHeight() {
+  // First render without fixed height to measure content
+  const heightInput = document.getElementById('canvasHeightInput');
+  heightInput.value = '';
+  renderCanvas();
+
+  // Measure actual content bottom
+  const canvas = document.getElementById('canvas');
+  let actualMax = 0;
+  canvas.querySelectorAll('.canvas-element').forEach(domEl => {
+    const id = parseInt(domEl.dataset.id);
+    const srcEl = elements.find(e => e.id === id);
+    if (!srcEl) return;
+    const b = srcEl.y + domEl.offsetHeight;
+    if (b > actualMax) actualMax = b;
+  });
+
+  const fittedH = Math.max(10, Math.ceil(actualMax + 5));
+  heightInput.value = fittedH;
+  renderCanvas();
+  showToast('高度已自动调整为 ' + fittedH + 'px');
+}
+
+// --- Stash (clipboard) ---
+
+let stashItems = [];
+let stashNextId = 1;
+
+async function stashCanvas() {
+  const prevSelected = selectedId;
+  selectedId = null;
+  renderCanvas();
+
+  const canvas = document.getElementById('canvas');
+  try {
+    const c = await html2canvas(canvas, {
+      scale: 1,
+      useCORS: true,
+      backgroundColor: document.getElementById('canvasBgColor').value,
+      width: canvas.scrollWidth,
+      height: canvas.scrollHeight
+    });
+    stashItems.push({
+      id: stashNextId++,
+      dataUrl: c.toDataURL('image/png'),
+      time: new Date().toLocaleTimeString()
+    });
+    renderStash();
+    showToast('已暂存到剪贴板');
+  } catch (err) {
+    console.error(err);
+    showToast('暂存失败');
+  }
+
+  selectedId = prevSelected;
+  renderCanvas();
+}
+
+function renderStash() {
+  const grid = document.getElementById('stashGrid');
+  const count = document.getElementById('stashCount');
+  if (stashItems.length === 0) {
+    grid.innerHTML = '<div class="stash-empty">点击「暂存」保存当前画布快照</div>';
+    count.textContent = '';
+    return;
+  }
+  count.textContent = stashItems.length + ' 项';
+  let html = '';
+  stashItems.forEach(item => {
+    html += `<div class="stash-item">
+      <img src="${item.dataUrl}" title="${item.time}" onclick="downloadStash(${item.id})">
+      <div class="stash-item-actions">
+        <button onclick="downloadStash(${item.id})" title="下载">下载</button>
+        <button class="stash-delete" onclick="removeStash(${item.id})" title="删除">删除</button>
+      </div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function downloadStash(id) {
+  const item = stashItems.find(s => s.id === id);
+  if (!item) return;
+  const link = document.createElement('a');
+  link.download = `morton_stash_${id}_${Date.now()}.png`;
+  link.href = item.dataUrl;
+  link.click();
+}
+
+function removeStash(id) {
+  stashItems = stashItems.filter(s => s.id !== id);
+  renderStash();
+}
+
+// --- Save to image ---
+
+async function saveToImage() {
+  // Deselect all elements to remove outlines
+  selectedId = null;
+  renderCanvas();
+
+  const canvas = document.getElementById('canvas');
+
+  try {
+    const c = await html2canvas(canvas, {
+      scale: 1,
+      useCORS: true,
+      backgroundColor: document.getElementById('canvasBgColor').value,
+      width: canvas.scrollWidth,
+      height: canvas.scrollHeight
+    });
+
+    const link = document.createElement('a');
+    link.download = `morton_${Date.now()}.png`;
+    link.href = c.toDataURL('image/png');
+    link.click();
+    showToast('图片已保存');
+  } catch (err) {
+    console.error(err);
+    showToast('保存失败，请重试');
+  }
+}
+
+// --- Drag support on canvas ---
+
+document.addEventListener('DOMContentLoaded', () => {
+  const canvasEl = document.getElementById('canvas');
+
+  // --- Left panel resizer ---
+  const resizer = document.getElementById('panelResizer');
+  const leftPanel = document.querySelector('.left-panel');
+  let resizeState = null;
+
+  resizer.addEventListener('mousedown', (e) => {
+    resizeState = { startX: e.clientX, startW: leftPanel.offsetWidth };
+    resizer.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!resizeState) {
+      // existing drag logic below
+    }
+  });
+
+  document.addEventListener('mousemove', function handleResize(e) {
+    if (resizeState) {
+      const dx = e.clientX - resizeState.startX;
+      const newW = Math.max(240, Math.min(600, resizeState.startW + dx));
+      leftPanel.style.width = newW + 'px';
+      e.preventDefault();
+      return;
+    }
+  }, true); // capture phase so it runs before canvas drag
+
+  document.addEventListener('mouseup', function handleResizeUp() {
+    if (resizeState) {
+      resizeState = null;
+      resizer.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  }, true);
+
+  // --- Canvas element drag ---
+  canvasEl.addEventListener('mousedown', (e) => {
+    // Check resize handle first
+    const resizeHandle = e.target.closest('.resize-handle');
+    if (resizeHandle) {
+      const id = parseInt(resizeHandle.dataset.resizeId);
+      const srcEl = elements.find(e => e.id === id);
+      if (!srcEl || srcEl.type !== 'image' || !srcEl.src) return;
+      selectedId = id;
+      renderCanvas();
+      const scaleRatio = canvasEl.offsetWidth / parseInt(canvasEl.style.width);
+      dragState = {
+        id,
+        startX: e.clientX,
+        startY: e.clientY,
+        scaleRatio,
+        resizing: true,
+        origScale: srcEl.scale
+      };
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
+    const el = e.target.closest('.canvas-element');
+    if (!el) return;
+    const id = parseInt(el.dataset.id);
+    selectedId = id;
+    renderCanvas();
+
+    const rect = canvasEl.getBoundingClientRect();
+    const scaleRatio = canvasEl.offsetWidth / parseInt(canvasEl.style.width);
+
+    dragState = {
+      id,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: e.clientX,
+      origY: e.clientY,
+      scaleRatio
+    };
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragState) return;
+    const el = elements.find(e => e.id === dragState.id);
+    if (!el) return;
+
+    if (dragState.resizing && el.type === 'image') {
+      // Proportional resize based on horizontal drag
+      const dx = (e.clientX - dragState.startX) / dragState.scaleRatio;
+      const deltaPercent = (dx / el.originalWidth) * 100;
+      const newScale = Math.max(5, Math.min(500, Math.round(dragState.origScale + deltaPercent)));
+      el.scale = newScale;
+      el.width = Math.round(el.originalWidth * newScale / 100);
+      el.height = Math.round(el.originalHeight * newScale / 100);
+      // Direct DOM update
+      const domEl = canvasEl.querySelector(`[data-id="${dragState.id}"]`);
+      if (domEl) {
+        domEl.style.width = el.width + 'px';
+        domEl.style.height = el.height + 'px';
+      }
+      e.preventDefault();
+      return;
+    }
+
+    const dx = (e.clientX - dragState.startX) / dragState.scaleRatio;
+    const dy = (e.clientY - dragState.startY) / dragState.scaleRatio;
+
+    el.x = Math.round(el.x + dx);
+    el.y = Math.round(el.y + dy);
+
+    dragState.startX = e.clientX;
+    dragState.startY = e.clientY;
+
+    // Direct DOM update for performance (avoid full re-render)
+    const domEl = canvasEl.querySelector(`[data-id="${dragState.id}"]`);
+    if (domEl) {
+      domEl.style.left = el.x + 'px';
+      domEl.style.top = el.y + 'px';
+    }
+    e.preventDefault();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (dragState) {
+      renderList(); // sync panel values
+      renderCanvas(); // ensure canvas height is correct
+      dragState = null;
+    }
+  });
+
+  // Touch support
+  canvasEl.addEventListener('touchstart', (e) => {
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const canvasElChild = el && el.closest('.canvas-element');
+    if (!canvasElChild) return;
+    const id = parseInt(canvasElChild.dataset.id);
+    selectedId = id;
+    renderCanvas();
+
+    const scaleRatio = canvasEl.offsetWidth / parseInt(canvasEl.style.width);
+    dragState = { id, startX: touch.clientX, startY: touch.clientY, scaleRatio };
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!dragState) return;
+    const touch = e.touches[0];
+    const el = elements.find(e => e.id === dragState.id);
+    if (!el) return;
+
+    const dx = (touch.clientX - dragState.startX) / dragState.scaleRatio;
+    const dy = (touch.clientY - dragState.startY) / dragState.scaleRatio;
+    el.x = Math.round(el.x + dx);
+    el.y = Math.round(el.y + dy);
+    dragState.startX = touch.clientX;
+    dragState.startY = touch.clientY;
+
+    const domEl = canvasEl.querySelector(`[data-id="${dragState.id}"]`);
+    if (domEl) {
+      domEl.style.left = el.x + 'px';
+      domEl.style.top = el.y + 'px';
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchend', () => {
+    if (dragState) {
+      renderList();
+      renderCanvas();
+      dragState = null;
+    }
+  });
+});
+</script>
+
+</body>
+</html>

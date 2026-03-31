@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>试题与答案全能转换器</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f3f4f6;
+            --panel-bg: #ffffff;
+            --border: #e5e7eb;
+            --text: #1f2937;
+            --header-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            background: var(--header-bg);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; }
+        .subtitle { font-size: 0.9rem; opacity: 0.8; margin-top: 5px; }
+
+        /* 通用面板样式 */
+        .section {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            padding: 12px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #334155;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn-go { background: var(--primary); color: white; }
+        .btn-copy { background: var(--success); color: white; }
+        .btn-demo { background: #64748b; color: white; }
+        .btn-clear { background: var(--danger); color: white; }
+
+        .workspace {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+            min-height: 200px;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .panel-label {
+            padding: 8px 12px;
+            background: #f1f5f9;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #64748b;
+            border-bottom: 1px solid var(--border);
+        }
+
+        textarea {
+            flex: 1;
+            border: none;
+            padding: 15px;
+            resize: none;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            outline: none;
+            color: #334155;
+            background: #fff;
+        }
+        
+        textarea[readonly] { background: #f8fafc; color: #1e293b; }
+
+        .badge {
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            color: #475569;
+        }
+
+        .score-info {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .workspace { flex-direction: column; }
+            textarea { min-height: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>试题与答案全能转换器</h1>
+    <div class="subtitle">高精度代码识别 | 答案自动算分 (总分100) | Markdown格式化</div>
+</header>
+
+<!-- 第一部分：题目转换 -->
+<div class="section">
+    <div class="section-header">
+        <span>📝 题目内容转换</span>
+        <span class="badge" id="qCountBadge">0 题</span>
+    </div>
+    <div class="toolbar">
+        <button class="btn-go" onclick="convertQuestions()">🚀 转换题目</button>
+        <button class="btn-copy" onclick="copyContent('qOutput')">📋 复制题目</button>
+        <button class="btn-demo" onclick="loadDemoQuestions()">📝 题目示例</button>
+        <button class="btn-clear" onclick="clearField('qInput', 'qOutput', 'qCountBadge')">🗑️ 清空</button>
+    </div>
+    <div class="workspace">
+        <div class="panel">
+            <div class="panel-label">原始题目文本</div>
+            <textarea id="qInput" placeholder="在此粘贴题目...&#10;1. 已知 x = 'book'...&#10;A. ...&#10;B. ..."></textarea>
+        </div>
+        <div class="panel">
+            <div class="panel-label">Markdown 格式题目</div>
+            <textarea id="qOutput" readonly placeholder="转换结果将显示在这里..."></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- 第二部分：答案转换 -->
+<div class="section">
+    <div class="section-header">
+        <span>✅ 答案格式转换 (总分100)</span>
+        <span class="score-info" id="scoreInfo">等待计算</span>
+    </div>
+    <div class="toolbar">
+        <button class="btn-go" onclick="convertAnswers()">🧮 生成答案格式</button>
+        <button class="btn-copy" onclick="copyContent('aOutput')">📋 复制答案</button>
+        <button class="btn-demo" onclick="loadDemoAnswers()">📝 答案示例</button>
+        <button class="btn-clear" onclick="clearField('aInput', 'aOutput', 'scoreInfo')">🗑️ 清空</button>
+    </div>
+    <div class="workspace">
+        <div class="panel">
+            <div class="panel-label">原始答案 (如: BDACC 或 B,D,A,C,C)</div>
+            <textarea id="aInput" placeholder="在此粘贴答案序列...&#10;系统会自动关联上方检测到的题目数量"></textarea>
+        </div>
+        <div class="panel">
+            <div class="panel-label">Markdown/YAML 格式答案</div>
+            <textarea id="aOutput" readonly placeholder="type: objective&#10;answers:&#10;  '1': ['B', 5]&#10;  ..."></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 全局状态 ---
+    let detectedQuestionCount = 0;
+
+    // --- 工具函数 ---
+    function copyContent(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el.value) return alert('无内容可复制');
+        el.select();
+        document.execCommand('copy');
+        if (navigator.clipboard) navigator.clipboard.writeText(el.value);
+        alert('已复制到剪贴板！');
+    }
+
+    function clearField(inputId, outputId, badgeId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(outputId).value = '';
+        const badge = document.getElementById(badgeId);
+        if (badgeId === 'qCountBadge') {
+            badge.textContent = '0 题';
+            detectedQuestionCount = 0;
+        } else if (badgeId === 'scoreInfo') {
+            badge.textContent = '等待计算';
+        } else {
+            badge.textContent = '';
+        }
+    }
+
+    // --- 核心逻辑：高精度代码识别 (复用之前的优化逻辑) ---
+
+    function isPureCode(text) {
+        if (!text || text.trim().length === 0) return false;
+        const trimmed = text.trim();
+        if (/[\u4e00-\u9fa5]{2,}/.test(trimmed)) return false;
+        if (/(是 | 为|的|否|真|假|结果|等于|大于|小于|属于|返回|正确|错误|应|想|要)/.test(trimmed)) return false;
+        
+        const codeCharsPattern = /^[A-Za-z0-9_\s\.\,\(\)\[\]\{\}\'\"\+\-\*\/\<\>\=\!\&\|\%\^\~\?]+$/;
+        if (!codeCharsPattern.test(trimmed)) return false;
+
+        const hasOperator = /[\+\-\*\/\%\<\>\=\!\&\|\^\~]/.test(trimmed);
+        const hasQuote = /['"]/.test(trimmed);
+        const hasParen = /[\(\)]/.test(trimmed);
+        const keywords = ['True', 'False', 'None', 'in', 'not', 'and', 'or', 'if', 'else', 'pass', 'break', 'continue', 'lambda'];
+        const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+        const allKeywordsOrShortVars = words.every(w => keywords.includes(w) || /^[A-Za-z_][A-Za-z0-9_]{0,15}$/.test(w));
+
+        return hasOperator || hasQuote || hasParen || allKeywordsOrShortVars;
+    }
+
+    function highlightInlineCode(text) {
+        if (!text) return text;
+        let result = "";
+        let i = 0;
+        const len = text.length;
+
+        while (i < len) {
+            let matchFound = false;
+            const char = text[i];
+
+            // 1. 匹配字符串
+            if (char === "'" || char === '"') {
+                const quote = char;
+                let j = i + 1;
+                while (j < len) {
+                    if (text[j] === '\\' && j + 1 < len) { j += 2; continue; }
+                    if (text[j] === quote) {
+                        result += `\`${text.substring(i, j + 1)}\``;
+                        i = j + 1;
+                        matchFound = true;
+                        break;
+                    }
+                    j++;
+                }
+                if (matchFound) continue;
+            }
+
+            // 2. 匹配赋值/运算
+            if (/[A-Za-z_0-9]/.test(char)) {
+                if (/[A-Za-z_]/.test(char) || /\d/.test(char)) {
+                    let k = i;
+                    let segmentEnd = -1;
+                    while (k < len) {
+                        const c = text[k];
+                        const isCodeChar = /[A-Za-z0-9_\.\[\]\(\)'"\s\+\-\*\/%<>=!&|^~]/.test(c);
+                        const isChinese = /[\u4e00-\u9fa5]/.test(c);
+                        const isPunctuation = /[,.:;!?,.]/.test(c);
+                        if (isChinese || isPunctuation) { segmentEnd = k; break; }
+                        if (!isCodeChar) { segmentEnd = k; break; }
+                        k++;
+                    }
+                    
+                    const candidate = text.substring(i, segmentEnd === -1 ? k : segmentEnd);
+                    const keywords = ['True', 'False', 'None', 'in', 'not', 'and', 'or', 'if', 'else', 'elif', 'for', 'while', 'def', 'return', 'import', 'from', 'as', 'class', 'try', 'except', 'finally', 'with', 'lambda', 'yield', 'pass', 'break', 'continue', 'assert', 'del', 'global', 'nonlocal', 'raise', 'print', 'len', 'range', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple'];
+                    
+                    const isJustWord = /^[A-Za-z_]+$/.test(candidate);
+                    const isKeyword = keywords.includes(candidate);
+                    const isAssignmentOrOp = /[+\-\*\/%<>=!&|^~(\[]/.test(candidate);
+
+                    if ((isAssignmentOrOp || isKeyword) && !(isJustWord && !isKeyword)) {
+                        let finalSegment = candidate.replace(/\s+$/, '');
+                        if (finalSegment.length > 0) {
+                            result += `\`${finalSegment}\``;
+                            i += finalSegment.length;
+                            if (candidate.length > finalSegment.length) i += (candidate.length - finalSegment.length);
+                            matchFound = true;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            // 3. 匹配独立关键字
+            if (/[A-Za-z_]/.test(char)) {
+                const keywords = ['True', 'False', 'None', 'in', 'not', 'and', 'or', 'if', 'else', 'elif', 'for', 'while', 'def', 'return', 'import', 'from', 'as', 'class', 'try', 'except', 'finally', 'with', 'lambda', 'yield', 'pass', 'break', 'continue', 'assert', 'del', 'global', 'nonlocal', 'raise', 'print', 'len', 'range', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple'];
+                for (let kw of keywords) {
+                    if (text.substr(i, kw.length) === kw) {
+                        const nextChar = text[i + kw.length];
+                        if (!nextChar || !/[A-Za-z0-9_]/.test(nextChar)) {
+                            const prevChar = i > 0 ? text[i-1] : '';
+                            if (!/[A-Za-z0-9_]/.test(prevChar)) {
+                                result += `\`${kw}\``;
+                                i += kw.length;
+                                matchFound = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (matchFound) continue;
+            }
+
+            result += char;
+            i++;
+        }
+        return result;
+    }
+
+    function parseSingleQuestion(text, defaultNum) {
+        const lines = text.split('\n');
+        if (lines.length === 0) return null;
+        const firstLine = lines[0];
+        const numMatch = firstLine.match(/^(\d+)\./);
+        const qNum = numMatch ? numMatch[1] : defaultNum;
+
+        let optionStartIndex = -1;
+        for (let i = 0; i < lines.length; i++) {
+            const trimmed = lines[i].trim();
+            if (/^[A-Z][\.、:]\s/.test(trimmed) || /^[A-Z][\.、:]$/.test(trimmed)) {
+                optionStartIndex = i;
+                break;
+            }
+        }
+
+        let titleLineRaw = firstLine.replace(/^\d+\.\s*/, '').trim();
+        let codeLines = [];
+        let optionLines = [];
+
+        if (optionStartIndex !== -1) {
+            for (let i = 1; i < optionStartIndex; i++) {
+                if (lines[i].trim() === '' && codeLines.length === 0) continue;
+                codeLines.push(lines[i]);
+            }
+            for (let i = optionStartIndex; i < lines.length; i++) {
+                if (lines[i].trim() !== '') optionLines.push(lines[i]);
+            }
+        } else {
+            let contentLines = [];
+            for(let i=1; i<lines.length; i++) if(lines[i].trim() !== '') contentLines.push(lines[i]);
+            let res = `${qNum}. ${highlightInlineCode(titleLineRaw)}`;
+            contentLines.forEach(l => res += '\n' + highlightInlineCode(l));
+            res += `\n{{ select(${qNum}) }}`;
+            return res;
+        }
+
+        let output = [];
+        output.push(`${qNum}. ${highlightInlineCode(titleLineRaw)}`);
+        if (codeLines.length > 0) {
+            output.push('```Python');
+            codeLines.forEach(line => output.push(line));
+            output.push('```');
+        }
+        output.push(`{{ select(${qNum}) }}`);
+
+        optionLines.forEach(opt => {
+            const trimmed = opt.trim();
+            const m = trimmed.match(/^([A-Z])[\.、:]\s*(.*)/);
+            if (m) {
+                const label = m[1];
+                const content = m[2];
+                let formattedContent = isPureCode(content) ? `\`${content}\`` : highlightInlineCode(content);
+                output.push(`- ${label}. ${formattedContent}`);
+            } else {
+                output.push(`- ${highlightInlineCode(trimmed)}`);
+            }
+        });
+        return output.join('\n');
+    }
+
+    // --- 业务逻辑：题目转换 ---
+
+    function loadDemoQuestions() {
+        const demo = `1. 已知变量 x = 'bookshelf'，想要打印出字符 's'，横线处应填写的代码是哪个选项？
+A. x[4]
+B. x[5]
+C. x['s']
+D. x.get('s')
+
+2. 若 a = 10, b = 20，则 a + b 的值是？
+A. 30
+B. 1020
+C. Error
+D. None
+
+3. 判断列表 lst 是否为空，应使用？
+A. if lst == []
+B. if not lst
+C. if len(lst) = 0
+D. 以上都是
+
+4. 执行 print('hello') 后输出？
+x = 1
+if x > 0:
+    print("Positive")
+A. Positive
+B. hello
+C. 1
+D. Error
+
+5. 表达式 10 != 10 的结果是？
+A. True
+B. False
+C. None
+D. Error`;
+        document.getElementById('qInput').value = demo;
+        updateQCount();
+    }
+
+    function updateQCount() {
+        const val = document.getElementById('qInput').value;
+        const count = (val.match(/^\d+\./gm) || []).length;
+        detectedQuestionCount = count;
+        document.getElementById('qCountBadge').textContent = `${count} 题`;
+        document.getElementById('scoreInfo').textContent = `检测到 ${count} 题，准备算分`;
+    }
+
+    document.getElementById('qInput').addEventListener('input', updateQCount);
+
+    function convertQuestions() {
+        const raw = document.getElementById('qInput').value;
+        if (!raw.trim()) return alert('请输入题目内容');
+
+        const lines = raw.split('\n');
+        const questions = [];
+        let currentQ = [];
+
+        lines.forEach(line => {
+            if (/^\d+\./.test(line.trim())) {
+                if (currentQ.length > 0) questions.push(currentQ.join('\n'));
+                currentQ = [line];
+            } else {
+                currentQ.push(line);
+            }
+        });
+        if (currentQ.length > 0) questions.push(currentQ.join('\n'));
+
+        const results = [];
+        questions.forEach((qText, index) => {
+            const md = parseSingleQuestion(qText, index + 1);
+            if (md) results.push(md);
+        });
+
+        const finalOutput = results.join('\n\n---\n\n');
+        document.getElementById('qOutput').value = finalOutput;
+        document.getElementById('qCountBadge').textContent = `成功 ${results.length} 题`;
+        
+        // 同步更新答案区的提示
+        detectedQuestionCount = results.length;
+        document.getElementById('scoreInfo').textContent = `检测到 ${results.length} 题，请在下方输入答案`;
+    }
+
+    // --- 业务逻辑：答案转换 ---
+
+    function loadDemoAnswers() {
+        // 假设对应上面的5道题
+        document.getElementById('aInput').value = "B A B A B";
+        document.getElementById('scoreInfo').textContent = "示例：5题，每题20分";
+    }
+
+    function convertAnswers() {
+        const rawAns = document.getElementById('aInput').value.trim();
+        if (!rawAns) return alert('请输入答案序列');
+
+        // 1. 解析答案字符串
+        // 移除所有空白、逗号、顿号等分隔符，只保留字母
+        const cleanAns = rawAns.replace(/[^A-Za-z]/g, '').toUpperCase();
+        
+        if (cleanAns.length === 0) return alert('未识别到有效答案字母');
+
+        // 2. 确定题目总数
+        let totalQuestions = detectedQuestionCount;
+        if (totalQuestions === 0) {
+            // 如果没检测到题目，尝试让用户确认或使用答案长度
+            const useLen = confirm(`未检测到题目数量（或题目未转换）。是否使用答案个数 (${cleanAns.length}) 作为题目总数？\n点击“取消”将默认为 20 题。`);
+            if (useLen) {
+                totalQuestions = cleanAns.length;
+            } else {
+                totalQuestions = 20;
+            }
+        }
+
+        // 3. 截取或填充答案以匹配题目数
+        let answersArray = cleanAns.split('');
+        if (answersArray.length > totalQuestions) {
+            if(!confirm(`答案数量 (${answersArray.length}) 多于题目数量 (${totalQuestions})。是否截断多余答案？\n点击“取消”将停止转换。`)) return;
+            answersArray = answersArray.slice(0, totalQuestions);
+        } else if (answersArray.length < totalQuestions) {
+            if(!confirm(`答案数量 (${answersArray.length}) 少于题目数量 (${totalQuestions})。是否用 'A' 填充剩余题目？\n点击“取消”将停止转换。`)) return;
+            while (answersArray.length < totalQuestions) {
+                answersArray.push('A');
+            }
+        }
+
+        // 4. 计算分值 (总分100)
+        const totalScore = 100;
+        const baseScore = Math.floor(totalScore / totalQuestions);
+        let remainder = totalScore % totalQuestions;
+        
+        let outputLines = [];
+        outputLines.push("type: objective # 表明该题为客观题");
+        outputLines.push("answers: # 列举出每一题的正确选项与对应的得分，总分需为100分");
+
+        for (let i = 0; i < totalQuestions; i++) {
+            const qNum = i + 1;
+            const ansChar = answersArray[i];
+            // 前 remainder 道题，每题多 1 分
+            const score = baseScore + (i < remainder ? 1 : 0);
+            
+            outputLines.push(`  '${qNum}': ['${ansChar}', ${score}]`);
+        }
+
+        const finalOutput = outputLines.join('\n');
+        document.getElementById('aOutput').value = finalOutput;
+        document.getElementById('scoreInfo').textContent = `已生成：${totalQuestions}题，总分100`;
+    }
+
+    // 初始化计数
+    updateQCount();
+
+</script>
+
+</body>
+</html>
