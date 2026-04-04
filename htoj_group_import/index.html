@@ -2,13 +2,16 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="../favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>核桃OJ小组快速导入</title>
+  <title>核桃OJ快速导入</title>
+  <script src="xlsx.full.min.js"></script>
   <style>
     :root {
       --primary: #4a6cf7;
       --primary-hover: #3b5de7;
       --danger: #e74c3c;
+      --danger-hover: #c0392b;
       --success: #27ae60;
       --bg: #f0f2f5;
       --card-bg: #ffffff;
@@ -27,8 +30,6 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
     }
 
     .app-header {
@@ -55,90 +56,132 @@
       color: var(--text-secondary);
     }
 
-    .main-content {
-      flex: 1;
+    .app-layout {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: var(--shadow-md);
-      width: 100%;
-      max-width: 560px;
+      height: calc(100vh - 53px);
       overflow: hidden;
     }
 
-    .card-header {
-      padding: 20px 24px 0;
+    /* Left Panel */
+    .left-panel {
+      width: 400px;
+      min-width: 280px;
+      max-width: 600px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    .card-header h2 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 4px;
+    /* Resizer handle */
+    .panel-resizer {
+      width: 6px;
+      cursor: col-resize;
+      background: transparent;
+      position: relative;
+      flex-shrink: 0;
+      z-index: 10;
+      transition: background 0.15s;
+    }
+    .panel-resizer:hover,
+    .panel-resizer.active {
+      background: var(--primary);
+      opacity: 0.4;
+    }
+    .panel-resizer::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 30px;
+      background: #cbd5e1;
+      border-radius: 1px;
+      transition: background 0.15s;
+    }
+    .panel-resizer:hover::after,
+    .panel-resizer.active::after {
+      background: var(--primary);
     }
 
-    .card-header p {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.5;
+    .panel-toolbar {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      background: #fafbfc;
+      align-items: center;
     }
 
-    .card-body {
-      padding: 20px 24px 24px;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
+    .panel-toolbar .label {
       font-size: 13px;
       font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 160px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      line-height: 1.6;
-      resize: vertical;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
       color: var(--text);
     }
 
-    textarea:focus {
+    .panel-content {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .form-group textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+      resize: vertical;
+      min-height: 200px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      line-height: 1.6;
+    }
+
+    .form-group textarea:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
     }
 
-    textarea::placeholder {
-      color: #a0aec0;
+    .form-group textarea::placeholder {
+      color: #b0bec5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    }
+
+    .id-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: right;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 9px 20px;
+      gap: 4px;
+      padding: 7px 14px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background: var(--card-bg);
       color: var(--text);
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: all 0.15s;
       white-space: nowrap;
@@ -153,101 +196,163 @@
     }
     .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
     .btn-danger { color: var(--danger); border-color: var(--danger); }
     .btn-danger:hover { background: var(--danger); color: #fff; }
 
-    .btn-group {
+    .action-bar {
+      padding: 16px;
+      border-top: 1px solid var(--border);
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .status-bar {
-      margin-top: 16px;
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      display: none;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .status-bar.show { display: flex; }
-
-    .status-bar.success {
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    .status-bar.error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
-
-    .current-list {
-      margin-top: 16px;
-    }
-
-    .current-list-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .current-list-header span {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    .current-list-header .count {
-      font-size: 12px;
-      color: var(--text-secondary);
-      background: var(--bg);
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    .current-list-body {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      gap: 8px;
       background: #fafbfc;
     }
 
-    .current-list-body .empty {
+    .action-bar .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      flex: 1;
+      overflow: auto;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #e8ecf1;
+    }
+
+    .preview-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 600px;
+      overflow: hidden;
+    }
+
+    .preview-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafbfc;
+    }
+
+    .preview-card-header .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .preview-card-header .count {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .table-wrapper {
+      max-height: calc(100vh - 180px);
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    table th {
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    table th .col-index {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      font-size: 11px;
+      margin-right: 8px;
+    }
+
+    table td {
+      padding: 8px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    table td .row-index {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      background: #f1f5f9;
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-right: 8px;
+    }
+
+    table tbody tr {
+      transition: background 0.1s;
+    }
+
+    table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    table tbody tr:nth-child(even) {
+      background: #fafbfc;
+    }
+
+    table tbody tr:nth-child(even):hover {
+      background: #f1f5f9;
+    }
+
+    .empty-preview {
+      padding: 60px 20px;
       text-align: center;
       color: #94a3b8;
-      font-size: 13px;
     }
 
-    .current-list-body ul {
-      list-style: none;
-      padding: 4px 0;
-      margin: 0;
+    .empty-preview .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.4;
     }
 
-    .current-list-body li {
-      padding: 5px 14px;
-      font-size: 13px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      border-bottom: 1px solid #f1f5f9;
+    .empty-preview .text {
+      font-size: 14px;
     }
 
-    .current-list-body li:last-child {
-      border-bottom: none;
-    }
-
-    .current-list-body li .row-num {
-      color: #94a3b8;
-      margin-right: 8px;
-      font-size: 12px;
-    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     /* Toast */
     .toast {
@@ -270,51 +375,49 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
 </head>
 <body>
 
 <div class="app-header">
-  <h1>核桃OJ小组快速导入</h1>
-  <span class="header-hint">批量写入 UserID 到 group.xlsx</span>
+  <h1>核桃OJ快速导入</h1>
+  <span class="header-hint">输入用户ID，生成Excel表格并下载</span>
 </div>
 
-<div class="main-content">
-  <div class="card">
-    <div class="card-header">
-      <h2>导入 UserID</h2>
-      <p>每行一个 UserID，点击「写入」后自动保存到 group.xlsx 的 A2 开始的行</p>
+<div class="app-layout">
+  <!-- Left Panel: Input -->
+  <div class="left-panel">
+    <div class="panel-toolbar">
+      <span class="label">用户ID输入</span>
+      <div style="flex:1"></div>
+      <span class="id-count" id="idCount">共 0 个ID</span>
     </div>
-    <div class="card-body">
+    <div class="panel-content">
       <div class="form-group">
-        <label for="useridInput">UserID 列表（每行一个）</label>
-        <textarea id="useridInput" placeholder="在此粘贴 UserID，每行一个&#10;例如：&#10;10001&#10;10002&#10;10003"></textarea>
+        <label>每行输入一个用户ID</label>
+        <textarea id="idInput" placeholder="请输入用户ID，每行一个&#10;例如：&#10;10001&#10;10002&#10;10003" oninput="updatePreview()"></textarea>
       </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-sm btn-danger" onclick="clearInput()">清空</button>
+      <button class="btn btn-primary" onclick="generateExcel()">生成表格</button>
+    </div>
+  </div>
 
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="writeToExcel()">写入</button>
-        <button class="btn btn-danger" onclick="clearInput()">清空输入</button>
-        <button class="btn" onclick="loadCurrent()">刷新列表</button>
+  <!-- Resizer -->
+  <div class="panel-resizer" id="panelResizer"></div>
+
+  <!-- Right Panel: Preview -->
+  <div class="right-panel">
+    <div class="preview-card">
+      <div class="preview-card-header">
+        <span class="title">表格预览</span>
+        <span class="count" id="previewCount">0 条记录</span>
       </div>
-
-      <div class="status-bar" id="statusBar">
-        <span id="statusIcon"></span>
-        <span id="statusText"></span>
-      </div>
-
-      <div class="current-list">
-        <div class="current-list-header">
-          <span>当前 Excel 中的 UserID</span>
-          <span class="count" id="userCount">0 条</span>
-        </div>
-        <div class="current-list-body" id="currentListBody">
-          <div class="empty">加载中...</div>
+      <div class="table-wrapper" id="tableWrapper">
+        <div class="empty-preview" id="emptyPreview">
+          <div class="icon">📋</div>
+          <div class="text">在左侧输入用户ID后，这里将实时显示预览</div>
         </div>
       </div>
     </div>
@@ -331,96 +434,99 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function showStatus(type, msg) {
-  const bar = document.getElementById('statusBar');
-  const icon = document.getElementById('statusIcon');
-  const text = document.getElementById('statusText');
-  bar.className = 'status-bar show ' + type;
-  icon.textContent = type === 'success' ? '✓' : '✗';
-  text.textContent = msg;
-}
-
-function hideStatus() {
-  document.getElementById('statusBar').className = 'status-bar';
-}
-
-function parseUserIds() {
-  const text = document.getElementById('useridInput').value.trim();
+function parseIds() {
+  const text = document.getElementById('idInput').value.trim();
   if (!text) return [];
-  return text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  return text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 }
 
-async function loadCurrent() {
-  hideStatus();
-  try {
-    const resp = await fetch('/api/data');
-    const data = await resp.json();
-    if (data.ok) {
-      renderList(data.ids);
-    } else {
-      renderList([]);
-      showStatus('error', '读取失败: ' + (data.error || '未知错误'));
-    }
-  } catch (e) {
-    renderList([]);
-    showStatus('error', '无法连接服务器，请确认 server.py 已启动');
-  }
-}
+function updatePreview() {
+  const ids = parseIds();
+  document.getElementById('idCount').textContent = '共 ' + ids.length + ' 个ID';
+  document.getElementById('previewCount').textContent = ids.length + ' 条记录';
 
-function renderList(ids) {
-  const body = document.getElementById('currentListBody');
-  const count = document.getElementById('userCount');
-  count.textContent = ids.length + ' 条';
+  const wrapper = document.getElementById('tableWrapper');
+  const empty = document.getElementById('emptyPreview');
+
   if (ids.length === 0) {
-    body.innerHTML = '<div class="empty">暂无数据</div>';
+    wrapper.innerHTML = '';
+    const emptyDiv = document.createElement('div');
+    emptyDiv.className = 'empty-preview';
+    emptyDiv.id = 'emptyPreview';
+    emptyDiv.innerHTML = '<div class="icon">📋</div><div class="text">在左侧输入用户ID后，这里将实时显示预览</div>';
+    wrapper.appendChild(emptyDiv);
     return;
   }
-  let html = '<ul>';
-  ids.forEach((id, i) => {
-    html += `<li><span class="row-num">${i + 1}.</span>${escapeHtml(id)}</li>`;
+
+  let html = '<table><thead><tr><th><span class="col-index">#</span>用户id</th></tr></thead><tbody>';
+  ids.forEach((id, idx) => {
+    html += '<tr><td><span class="row-index">' + (idx + 1) + '</span>' + escHtml(id) + '</td></tr>';
   });
-  html += '</ul>';
-  body.innerHTML = html;
+  html += '</tbody></table>';
+  wrapper.innerHTML = html;
 }
 
-async function writeToExcel() {
-  hideStatus();
-  const ids = parseUserIds();
-  if (ids.length === 0) {
-    showStatus('error', '请先输入 UserID');
-    return;
-  }
-
-  try {
-    const resp = await fetch('/api/data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids })
-    });
-    const data = await resp.json();
-    if (data.ok) {
-      showStatus('success', `已写入 ${data.count} 条 UserID 到 group.xlsx`);
-      showToast('写入成功');
-      loadCurrent();
-    } else {
-      showStatus('error', '写入失败: ' + (data.error || '未知错误'));
-    }
-  } catch (e) {
-    showStatus('error', '无法连接服务器');
-  }
+function escHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function clearInput() {
-  document.getElementById('useridInput').value = '';
-  hideStatus();
-  showToast('已清空输入');
+  document.getElementById('idInput').value = '';
+  updatePreview();
+  showToast('已清空');
 }
 
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function generateExcel() {
+  const ids = parseIds();
+  if (ids.length === 0) {
+    showToast('请先输入至少一个用户ID');
+    return;
+  }
+
+  const data = [['用户id']];
+  ids.forEach(id => data.push([id]));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{ wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, ws, '用户ID');
+
+  const filename = '核桃OJ用户ID_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+  XLSX.writeFile(wb, filename);
+  showToast('已生成并下载 ' + filename);
 }
 
-document.addEventListener('DOMContentLoaded', loadCurrent);
+// Panel resizer
+document.addEventListener('DOMContentLoaded', () => {
+  const resizer = document.getElementById('panelResizer');
+  const leftPanel = document.querySelector('.left-panel');
+  let resizeState = null;
+
+  resizer.addEventListener('mousedown', (e) => {
+    resizeState = { startX: e.clientX, startW: leftPanel.offsetWidth };
+    resizer.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!resizeState) return;
+    const dx = e.clientX - resizeState.startX;
+    const newW = Math.max(280, Math.min(600, resizeState.startW + dx));
+    leftPanel.style.width = newW + 'px';
+    e.preventDefault();
+  }, true);
+
+  document.addEventListener('mouseup', () => {
+    if (resizeState) {
+      resizeState = null;
+      resizer.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  }, true);
+});
 </script>
 
 </body>

@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>猫凳导航</title>
   <style>
@@ -71,29 +72,42 @@
       75% { transform: translate(20px, 20px) scale(1.02); }
     }
 
-    .header,
-    .nav-grid,
-    .footer {
-      position: relative;
-      z-index: 1;
+    /* Top bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      pointer-events: none;
     }
 
     .header {
-      margin-bottom: 48px;
-      text-align: center;
+      text-align: left;
+      pointer-events: auto;
     }
 
     .header h1 {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 600;
       color: #1d1d1f;
       letter-spacing: 2px;
     }
 
     .header p {
-      margin-top: 8px;
-      font-size: 14px;
+      margin-top: 4px;
+      font-size: 13px;
       color: #86868b;
+    }
+
+    .nav-grid,
+    .footer {
+      position: relative;
+      z-index: 1;
     }
 
     .nav-grid {
@@ -151,9 +165,12 @@
   <div class="bg-blob"></div>
   <div class="bg-blob"></div>
 
-  <div class="header">
-    <h1>猫凳导航</h1>
-    <p>常用工具，一键直达</p>
+  <!-- 顶部栏 -->
+  <div class="top-bar">
+    <div class="header">
+      <h1>猫凳导航</h1>
+      <p>常用工具，一键直达</p>
+    </div>
   </div>
 
   <div class="nav-grid">
@@ -179,6 +196,12 @@
     <a class="nav-item" href="https://word.xkloj.online" target="_blank">
       <img src="word.png" alt="Word文档解析">
       <span>Word文档解析</span>
+    </a>
+
+    <!-- OJ小组快速导入 -->
+    <a class="nav-item" href="https://htojgroup.xkloj.online" target="_blank">
+      <img src="htojgroup.png" alt="OJ小组快速导入">
+      <span>OJ小组快速导入</span>
     </a>
   </div>
 
