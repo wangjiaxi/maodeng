@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="../favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文档智能校验</title>
+  <style>
+    :root {
+      --primary: #4a6cf7;
+      --primary-hover: #3b5de7;
+      --danger: #e74c3c;
+      --danger-hover: #c0392b;
+      --success: #27ae60;
+      --warning: #f59e0b;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --text-secondary: #64748b;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .app-header h1 { font-size: 18px; font-weight: 600; color: var(--primary); }
+    .header-hint { font-size: 13px; color: var(--text-secondary); }
+
+    .app-body {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon { font-size: 18px; }
+
+    /* Form */
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="password"],
+    .form-group textarea,
+    .form-group select {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+      background: var(--card-bg);
+      color: var(--text);
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(74,108,247,0.12);
+    }
+
+    .api-link {
+      white-space: nowrap;
+      font-size:13px; color:#fff;
+      background:var(--primary); border:none;
+      padding:8px 14px; border-radius:var(--radius);
+      text-decoration:none; cursor:pointer;
+      transition:background .15s; flex-shrink:0;
+    }
+    .api-link:hover { background:var(--primary-hover); }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 200px;
+      line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    }
+    .form-group textarea::placeholder { color: #b0bec5; }
+
+    /* File upload */
+    .file-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      background: #fafbfc;
+    }
+    .file-upload-area:hover { border-color: var(--primary); background: #f5f7ff; }
+    .file-upload-area.dragover {
+      border-color: var(--primary);
+      background: #eff4ff;
+      box-shadow: 0 0 0 4px rgba(74,108,247,0.08);
+    }
+    .file-upload-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.45; }
+    .file-upload-text { font-size: 14px; color: var(--text-secondary); }
+    .file-upload-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .file-upload-input { display: none; }
+
+    .uploaded-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+    .uploaded-file .file-name { flex: 1; font-weight: 500; color: #166534; }
+    .uploaded-file .file-remove {
+      cursor: pointer; color: var(--danger); font-size: 13px;
+      user-select: none; padding: 2px 6px; border-radius: 4px;
+    }
+    .uploaded-file .file-remove:hover { background: #fee2e2; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-primary {
+      background: var(--primary); color: #fff; border-color: var(--primary);
+    }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+    .btn-primary:disabled {
+      background: #94a3b8; border-color: #94a3b8; cursor: not-allowed;
+    }
+    .btn-danger { color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-block { width: 100%; justify-content: center; }
+
+    /* Action bar */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 20px;
+    }
+
+    /* Result area */
+    .result-section { margin-top: 20px; }
+    .result-section.hidden { display: none; }
+
+    .phase-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .phase-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      background: #fafbfc;
+    }
+    .phase-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+    }
+    .phase-badge.typo { background: #fef3c7; color: #92400e; }
+    .phase-badge.logic { background: #dbeafe; color: #1e40af; }
+    .phase-status {
+      margin-left: auto; font-size: 12px; color: var(--text-secondary);
+    }
+    .phase-status.loading { color: var(--primary); }
+    .phase-status.done { color: var(--success); }
+    .phase-status.error { color: var(--danger); }
+
+    .phase-body { padding: 16px 20px; }
+
+    .issue-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .issue-item {
+      display: flex; gap: 12px; padding: 12px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      transition: background 0.12s;
+    }
+    .issue-item:hover { background: #f8fafc; }
+    .issue-severity {
+      width: 6px; height: auto; border-radius: 3px; flex-shrink: 0;
+    }
+    .issue-severity.high { background: var(--danger); }
+    .issue-severity.medium { background: var(--warning); }
+    .issue-severity.low { background: #93c5fd; }
+    .issue-content { flex: 1; }
+    .issue-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+    .issue-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .issue-fix {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 6px; padding: 4px 10px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: 6px; font-size: 12px; color: #166534;
+    }
+
+    .issue-location {
+      font-size: 12px; color: var(--primary); margin-bottom: 2px;
+    }
+
+    .issue-original-text {
+      font-size: 12.5px; line-height: 1.5; margin-top: 6px; padding: 8px 10px;
+      background: #fef2f2; border: 1px solid #fecaca; border-left: 3px solid var(--danger);
+      border-radius: 4px; color: #991b1b; word-break: break-all;
+    }
+
+    .no-issue { text-align: center; color: var(--success); font-size: 14px; padding: 20px 0; }
+    .no-issue .icon { font-size: 32px; margin-bottom: 6px; opacity: 0.6; }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid currentColor; border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 70px; left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #1e293b; color: #fff; padding: 10px 20px;
+      border-radius: var(--radius); font-size: 14px; z-index: 9999;
+      pointer-events: none; opacity: 0; transition: all 0.25s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Summary bar */
+    .summary-bar {
+      display: flex; gap: 20px; margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .summary-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .summary-item strong { color: var(--text); font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>文档智能校验</h1>
+  <span class="header-hint">AI 驱动的文档质量检查工具</span>
+</div>
+
+<div class="app-body">
+
+  <!-- API 配置 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🔑</span>API 配置 · 智谱 AI</div>
+    <div class="form-group" style="max-width:480px">
+      <label>API Key（从 open.bigmodel.cn 获取）</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="text" id="apiKey" placeholder="请输入智谱 AI 的 API Key" value="" style="flex:1">
+        <a href="https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys" target="_blank" class="api-link">获取 Key</a>
+      </div>
+      <span style="font-size:11px;color:var(--text-secondary);margin-top:2px;display:block;">使用智谱 GLM-4-Flash 模型进行文档校验分析</span>
+    </div>
+  </div>
+
+  <!-- 内容输入 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📄</span>待检查内容</div>
+
+    <!-- 文件上传区 -->
+    <div class="file-upload-area" id="dropArea" onclick="document.getElementById('fileInput').click()">
+      <div class="file-upload-icon">📁</div>
+      <div class="file-upload-text">点击或拖拽文件到此处上传</div>
+      <div class="file-upload-hint">支持 Word (.docx)、PPT (.pptx)、PDF (.pdf)</div>
+      <input type="file" id="fileInput" class="file-upload-input"
+             accept=".docx,.pptx,.pdf,.doc" onchange="handleFileSelect(this)">
+    </div>
+    <div id="uploadedFileInfo"></div>
+
+    <div style="margin-top: 16px;">
+      <div class="form-group">
+        <label>文本内容（粘贴文字或上传文件自动填充）</label>
+        <textarea id="contentInput" placeholder="在此粘贴需要检查的文档内容，或上传文件后自动提取..."></textarea>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary btn-block" id="checkBtn" onclick="startCheck()">
+        🔍 开始检查
+      </button>
+      <button class="btn btn-danger" onclick="clearAll()">清空</button>
+    </div>
+  </div>
+
+  <!-- 检查结果 -->
+  <div class="result-section hidden" id="resultSection">
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span>检查结果</div>
+
+      <div class="summary-bar" id="summaryBar"></div>
+
+      <!-- 阶段一：基础校验 -->
+      <div class="phase-card">
+        <div class="phase-header">
+          <span class="phase-badge typo">🔤 基础校验</span>
+          <span>语法 · 错别字 · 标点 · 格式</span>
+          <span class="phase-status" id="phase1Status"></span>
+        </div>
+        <div class="phase-body" id="phase1Body">
+          <p style="color:#94a3b8;font-size:13px;">等待开始...</p>
+        </div>
+      </div>
+
+      <!-- 阶段二：逻辑分析 -->
+      <div class="phase-card">
+        <div class="phase-header">
+          <span class="phase-badge logic">🧠 深度分析</span>
+          <span>逻辑错误 · 前后矛盾 · 事实核查</span>
+          <span class="phase-status" id="phase2Status"></span>
+        </div>
+        <div class="phase-body" id="phase2Body">
+          <p style="color:#94a3b8;font-size:13px;">等待阶段一完成...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- JSZip (用于 DOCX / PPTX 解析) -->
+<script src="jszip.min.js"></script>
+
+<!-- pdf.js (用于 PDF 解析) -->
+<script src="pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+  }
+</script>
+
+<!-- Hidden file input -->
+<input type="file" id="hiddenFileInput" accept=".docx,.pptx,.pdf,.doc" style="display:none">
+
+<script>
+// ===== 工具函数 =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== 文件拖拽上传 =====
+const dropArea = document.getElementById('dropArea');
+['dragenter','dragover'].forEach(evt => {
+  dropArea.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropArea.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(evt => {
+  dropArea.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropArea.classList.remove('dragover'); });
+});
+dropArea.addEventListener('drop', e => {
+  const files = e.dataTransfer.files;
+  if (files.length) handleFile(files[0]);
+});
+
+let uploadedFile = null;
+
+function handleFileSelect(input) {
+  if (input.files.length) handleFile(input.files[0]);
+}
+
+async function handleFile(file) {
+  uploadedFile = file;
+  document.getElementById('uploadedFileInfo').innerHTML =
+    `<div class="uploaded-file">
+       <span>📎</span>
+       <span class="file-name">${escHtml(file.name)} (${formatSize(file.size)})</span>
+       <span class="file-remove" onclick="removeFile(event)">移除</span>
+     </div>`;
+  showToast('正在解析文件...');
+
+  try {
+    let text = '';
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    if (ext === 'pdf') {
+      text = await parsePDF(file);
+    } else if (ext === 'docx' || ext === 'doc') {
+      text = await parseDocx(file);
+    } else if (ext === 'pptx' || ext === 'ppt') {
+      text = await parsePptx(file);
+    } else {
+      showToast('不支持的文件类型');
+      return;
+    }
+
+    document.getElementById('contentInput').value = text.trim();
+    showToast('文件解析完成');
+  } catch(err) {
+    console.error(err);
+    showToast('文件解析失败: ' + err.message);
+  }
+}
+
+function removeFile(e) {
+  e.stopPropagation();
+  uploadedFile = null;
+  document.getElementById('uploadedFileInfo').innerHTML = '';
+  document.getElementById('fileInput').value = '';
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ===== 文件解析 =====
+
+// PDF 解析（使用 pdf.js 或简单提示）
+async function parsePDF(file) {
+  // 尝试使用 FileReader + 简单文本提取
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function() {
+      try {
+        // 使用 pdf.js 解析
+        if (typeof pdfjsLib !== 'undefined') {
+          const data = new Uint8Array(reader.result);
+          const pdf = await pdfjsLib.getDocument({data}).promise;
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const txt = await page.getTextContent();
+            fullText += txt.items.map(s => s.str).join(' ') + '\n\n';
+          }
+          resolve(fullText);
+        } else {
+          // fallback: 基于 ArrayBuffer 的简单方式
+          reject(new Error('PDF 解析库未加载，请手动粘贴内容'));
+        }
+      } catch(e) {
+        reject(new Error('PDF 解析失败，请手动粘贴内容'));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// DOCX 解析（使用 JSZip + XML）
+async function parseDocx(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function() {
+      try {
+        if (typeof JSZip === 'undefined') {
+          reject(new Error('JSZip 未加载，请手动粘贴内容'));
+          return;
+        }
+        const zip = await JSZip.loadAsync(reader.result);
+        const xml = await zip.file('word/document.xml').async('string');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'application/xml');
+        const texts = doc.getElementsByTagName('w:t');
+        let result = '';
+        for (const t of texts) {
+          if (t.textContent) result += t.textContent;
+        }
+        resolve(result || '(未能提取文本)');
+      } catch(e) {
+        reject(new Error('Word 文档解析失败'));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// PPTX 解析
+async function parsePptx(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function() {
+      try {
+        if (typeof JSZip === 'undefined') {
+          reject(new Error('JSZip 未加载，请手动粘贴内容'));
+          return;
+        }
+        const zip = await JSZip.loadAsync(reader.result);
+        const slides = zip.file(/ppt\/slides\/slide\d+\.xml$/);
+        let result = '';
+        for (const slideFile of slides.sort((a, b) => {
+          const na = a.name.match(/\d+/)[0]; const nb = b.name.match(/\d+/)[0];
+          return parseInt(na) - parseInt(nb);
+        })) {
+          const xml = await slideFile.async('string');
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(xml, 'application/xml');
+          const texts = doc.getElementsByTagName('a:t');
+          for (const t of texts) { if (t.textContent) result += t.textContent + ' '; }
+          result += '\n---\n\n';
+        }
+        resolve(result.trim() || '(未能提取文本)');
+      } catch(e) {
+        reject(new Error('PPT 文档解析失败'));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ===== API 调用（固定智谱 AI）=====
+
+const GLM_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+const GLM_MODEL = 'glm-4-flash';
+
+async function callLLM(systemPrompt, userContent) {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) throw new Error('请先填写智谱 AI 的 API Key');
+
+  const body = {
+    model: GLM_MODEL,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent }
+    ],
+    temperature: 0.3,
+    max_tokens: 4000
+  };
+
+  const resp = await fetch(GLM_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const errData = await resp.json().catch(() => ({}));
+    throw new Error(errData.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const json = await resp.json();
+  return json.choices[0].message.content;
+}
+
+// ===== 检查流程 =====
+
+async function startCheck() {
+  const content = document.getElementById('contentInput').value.trim();
+  if (!content) { showToast('请先输入或上传待检查的内容'); return; }
+
+  const btn = document.getElementById('checkBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 检查中...';
+
+  // 显示结果区域
+  document.getElementById('resultSection').classList.remove('hidden');
+
+  try {
+    // ---- 阶段一：基础校验 ----
+    setPhaseStatus(1, 'loading', '<span class="spinner"></span> 正在校验中...');
+    const phase1Result = await runPhase1(content);
+    renderIssues('phase1Body', phase1Result.issues);
+    setPhaseStatus(1, 'done', `发现 ${phase1Result.issues.length} 个问题`);
+
+    // ---- 阶段二：深度分析 ----
+    setPhaseStatus(2, 'loading', '<span class="spinner"></span> 分析中...');
+    const phase2Result = await runPhase2(content, phase1Result.issues);
+    renderIssues('phase2Body', phase2Result.issues);
+    setPhaseStatus(2, 'done', `发现 ${phase2Result.issues.length} 个问题`);
+
+    // 汇总
+    renderSummary(phase1Result.issues.length, phase2Result.issues.length);
+
+  } catch(err) {
+    console.error(err);
+    showToast(err.message);
+    if (document.getElementById('phase1Status').textContent.includes('校验')) {
+      setPhaseStatus(1, 'error', '校验失败: ' + err.message);
+    } else {
+      setPhaseStatus(2, 'error', '分析失败: ' + err.message);
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔍 开始检查';
+}
+
+async function runPhase1(text) {
+  const systemPrompt = `你是一个专业的中文文档校验助手。你的任务是对用户提供的文档进行基础层面的校验。
+
+请严格按以下 JSON 格式返回结果，不要输出任何其他内容：
+{
+  "issues": [
+    {
+      "severity": "high|medium|low",
+      "title": "问题简短标题",
+      "description": "问题描述详情",
+      "location": "问题在原文中的具体位置（如：第X段、第X行、或引用关键句，务必准确标注）",
+      "original_text": "原文中有问题的完整片段（必须包含错误前后上下文）",
+      "suggestion": "修改建议"
+    }
+  ]
+}
+
+校验范围包括但不限于：
+1. **错别字**：常见错别字、形近字、音近字误用
+2. **语法错误**：病句、成分残缺、搭配不当、语序不当、重复累赘
+3. **标点符号**：标点使用不当（如中英文标点混用、引号不成对等）
+4. **格式规范**：数字与单位格式、日期时间格式等
+5. **用词不当**：词语使用不准确、生造词、网络用语不当使用
+
+注意：
+- severity: high 表示严重错误（影响理解的错别字、明显语病），medium 表示一般问题，low 为轻微建议
+- **location 字段必须准确填写**，说明问题出现在原文的哪一段/哪一行，或直接引用原文关键句作为定位
+- **original_text 必须包含有问题的完整原文片段**，不要省略
+- 如果没有发现问题，返回空数组 issues: []
+- 只返回 JSON，不要有其他说明文字`;
+
+  const resp = await callLLM(systemPrompt, text);
+  return safeParseJSON(resp);
+}
+
+async function runPhase2(text, phase1Issues) {
+  const issueSummary = phase1Issues.map(i => `- ${i.title}: ${i.description}`).join('\n');
+
+  const systemPrompt = `你是一个专业的文档逻辑分析专家。在基础校验之后，现在需要对文档进行深度的逻辑和事实层面分析。
+
+请严格按以下 JSON 格式返回结果，不要输出任何其他内容：
+{
+  "issues": [
+    {
+      "severity": "high|medium|low",
+      "title": "问题简短标题",
+      "description": "详细解释为什么这是一个逻辑问题",
+      "location": "问题在原文中的具体位置（如：第X段、第X章、或引用关键句）",
+      "related_text": "相关的原文段落",
+      "suggestion": "改进建议",
+      "reasoning": "分析推理过程"
+    }
+  ]
+}
+
+深度分析范围包括但不限于：
+1. **前后矛盾**：文档不同部分的说法互相矛盾
+2. **因果谬误**：因果关系不成立或颠倒
+3. **以偏概全**：用个别例子推导普遍结论
+4. **数据异常**：数据计算错误、比例不合理、数值矛盾
+5. **概念混淆**：相近概念的混用或定义不清
+6. **论证缺失**：只有结论没有论据，或者论据无法支撑结论
+7. **时效性问题**：引用过时的数据、政策或法规
+8. **常识错误**：违背基本常识或客观规律
+
+注意：
+- severity: high 表示严重的逻辑漏洞或事实错误，medium 表示值得关注的潜在问题，low 为建议性意见
+- **location 字段必须准确填写**，说明问题出现在原文的哪一段/哪一行
+- **related_text 必须包含相关的完整原文片段**
+- 已有的基础校验问题摘要如下，请在此基础上进行更深层分析：
+${issueSummary}
+- 如果未发现深层逻辑问题，返回空数组 issues: []
+- 只返回 JSON，不要有其他说明文字`;
+
+  const resp = await callLLM(systemPrompt, text);
+  return safeParseJSON(resp);
+}
+
+function safeParseJSON(raw) {
+  // 提取 JSON（可能被包裹在 ```json 中）
+  let cleaned = raw.trim();
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) cleaned = jsonMatch[0];
+  try {
+    return JSON.parse(cleaned);
+  } catch(e) {
+    console.warn('JSON parse failed, raw:', raw);
+    return { issues: [] };
+  }
+}
+
+// ===== 渲染 =====
+
+function setPhaseStatus(phase, status, html) {
+  const el = document.getElementById('phase' + phase + 'Status');
+  el.className = 'phase-status ' + status;
+  el.innerHTML = html;
+}
+
+function renderIssues(containerId, issues) {
+  const container = document.getElementById(containerId);
+  if (!issues || issues.length === 0) {
+    container.innerHTML =
+      `<div class="no-issue"><div class="icon">✅</div><div>未发现问题，内容质量良好</div></div>`;
+    return;
+  }
+
+  let html = '<ul class="issue-list">';
+  issues.forEach((issue, idx) => {
+    const sevClass = {high:'high', medium:'medium', low:'low'}[issue.severity] || 'low';
+    const sevLabel = {high:'严重', medium:'中等', low:'建议'}[issue.severity] || '建议';
+
+    // 原文片段
+    const origText = issue.original_text || issue.related_text || '';
+    // 位置
+    const locText = issue.location || issue.reasoning || '';
+
+    html += `<li class="issue-item">
+      <div class="issue-severity ${sevClass}"></div>
+      <div class="issue-content">
+        <div class="issue-title">${escHtml(issue.title || '')} <small style="color:var(--text-secondary);font-weight:normal;">[${sevLabel}]</small></div>
+        ${locText ? `<div class="issue-location">📍 ${escHtml(locText)}</div>` : ''}
+        <div class="issue-desc">${escHtml(issue.description || '')}</div>`
+        // 高亮显示有问题的原文
+        + (origText ? `<div class="issue-original-text">📝 有问题原文：${escHtml(origText)}</div>` : '')
+        + (issue.suggestion ? `<div class="issue-fix">💡 建议：${escHtml(issue.suggestion)}</div>` : '')
+      + `</div></li>`;
+  });
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+function renderSummary(typoCount, logicCount) {
+  const total = typoCount + logicCount;
+  const bar = document.getElementById('summaryBar');
+  bar.innerHTML = `
+    <div class="summary-item"><strong>${total}</strong> 个问题总计</div>
+    <div class="summary-item" style="color:#92400e"><strong>${typoCount}</strong> 基础问题</div>
+    <div class="summary-item" style="color:#1e40af"><strong>${logicCount}</strong> 逻辑问题</div>
+    ${total === 0 ? '<div class="summary-item" style="color:var(--success)">🎉 文档质量优秀！</div>' : ''}
+  `;
+}
+
+function clearAll() {
+  document.getElementById('contentInput').value = '';
+  removeFile({stopPropagation:()=>{}});
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('phase1Status').textContent = '';
+  document.getElementById('phase2Status').textContent = '';
+  showToast('已清空');
+}
+</script>
+
+</body>
+</html>
