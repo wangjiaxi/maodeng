@@ -4,213 +4,576 @@
   <meta charset="UTF-8">
   <link rel="icon" href="favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>猫凳导航</title>
+  <title>猫凳系统</title>
+  <script>
+    // 首屏前应用已保存的主题，避免闪烁
+    (function () {
+      var mode = null;
+      try { mode = localStorage.getItem('maodeng-theme'); } catch (e) {}
+      if (mode !== 'light' && mode !== 'dark' && mode !== 'auto') mode = 'auto';
+      document.documentElement.setAttribute('data-theme', mode);
+    })();
+  </script>
   <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --text: #16181d;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --card-bg: rgba(255, 255, 255, 0.66);
+      --card-border: rgba(17, 24, 39, 0.07);
+      --card-shadow: 0 2px 10px rgba(17, 24, 39, 0.05);
+      --card-shadow-hover: 0 18px 40px rgba(79, 70, 229, 0.16);
+      --badge-bg: rgba(255, 255, 255, 0.7);
+      --badge-border: rgba(17, 24, 39, 0.08);
+      --switch-thumb: rgba(255, 255, 255, 0.95);
+      /* 两份首尾同色的色环，配合单向位移实现无缝循环 */
+      --title-gradient: linear-gradient(120deg, #2563eb 0%, #0891b2 6.25%, #059669 12.5%, #ca8a04 18.75%, #ea580c 25%, #e11d48 31.25%, #c026d3 37.5%, #7c3aed 43.75%, #2563eb 50%, #0891b2 56.25%, #059669 62.5%, #ca8a04 68.75%, #ea580c 75%, #e11d48 81.25%, #c026d3 87.5%, #7c3aed 93.75%, #2563eb 100%);
+      --spotlight: rgba(99, 102, 241, 0.14);
+      --blob-opacity: 0.45;
+    }
+
+    /* 深色变量：手动深色，与下方"自动跟随系统"两处需保持一致 */
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0b0d12;
+      --text: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-tertiary: #6b7280;
+      --card-bg: rgba(255, 255, 255, 0.055);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      --card-shadow-hover: 0 18px 40px rgba(129, 140, 248, 0.18);
+      --badge-bg: rgba(255, 255, 255, 0.06);
+      --badge-border: rgba(255, 255, 255, 0.12);
+      --switch-thumb: rgba(255, 255, 255, 0.16);
+      --title-gradient: linear-gradient(120deg, #60a5fa 0%, #22d3ee 6.25%, #34d399 12.5%, #fbbf24 18.75%, #fb923c 25%, #fb7185 31.25%, #e879f9 37.5%, #a78bfa 43.75%, #60a5fa 50%, #22d3ee 56.25%, #34d399 62.5%, #fbbf24 68.75%, #fb923c 75%, #fb7185 81.25%, #e879f9 87.5%, #a78bfa 93.75%, #60a5fa 100%);
+      --spotlight: rgba(129, 140, 248, 0.12);
+      --blob-opacity: 0.22;
+    }
+
+    /* 自动模式（或 JS 未执行）下跟随系统深色 */
+    @media (prefers-color-scheme: dark) {
+      html:not([data-theme="light"]):not([data-theme="dark"]) {
+        color-scheme: dark;
+        --bg: #0b0d12;
+        --text: #f3f4f6;
+        --text-secondary: #9ca3af;
+        --text-tertiary: #6b7280;
+        --card-bg: rgba(255, 255, 255, 0.055);
+        --card-border: rgba(255, 255, 255, 0.1);
+        --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        --card-shadow-hover: 0 18px 40px rgba(129, 140, 248, 0.18);
+        --badge-bg: rgba(255, 255, 255, 0.06);
+        --badge-border: rgba(255, 255, 255, 0.12);
+        --switch-thumb: rgba(255, 255, 255, 0.16);
+        --title-gradient: linear-gradient(120deg, #60a5fa 0%, #22d3ee 6.25%, #34d399 12.5%, #fbbf24 18.75%, #fb923c 25%, #fb7185 31.25%, #e879f9 37.5%, #a78bfa 43.75%, #60a5fa 50%, #22d3ee 56.25%, #34d399 62.5%, #fbbf24 68.75%, #fb923c 75%, #fb7185 81.25%, #e879f9 87.5%, #a78bfa 93.75%, #60a5fa 100%);
+        --spotlight: rgba(129, 140, 248, 0.12);
+        --blob-opacity: 0.22;
+      }
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    html, body {
+      overflow-x: hidden;
+    }
+
     body {
-      min-height: 100vh;
+      min-height: 100svh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #f5f5f7;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
-      overflow: hidden;
       position: relative;
+      transition: background-color 0.4s ease;
     }
 
-    .bg-blob {
+    /* ---------- 背景 ---------- */
+    .bg {
       position: fixed;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.35;
-      pointer-events: none;
+      inset: 0;
       z-index: 0;
-      animation: float 20s ease-in-out infinite;
+      pointer-events: none;
+      overflow: hidden;
     }
 
-    .bg-blob:nth-child(1) {
-      width: 400px;
-      height: 400px;
-      background: #a8d8ea;
-      top: -10%;
-      left: -5%;
-      animation-delay: 0s;
-      animation-duration: 22s;
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: var(--blob-opacity);
+      animation: float 22s ease-in-out infinite;
+      transition: opacity 0.4s ease;
     }
 
-    .bg-blob:nth-child(2) {
-      width: 350px;
-      height: 350px;
-      background: #f6c6ea;
-      bottom: -8%;
-      right: -5%;
-      animation-delay: -5s;
-      animation-duration: 18s;
+    .blob.b1 {
+      width: 480px;
+      height: 480px;
+      background: #818cf8;
+      top: -14%;
+      left: -8%;
+      animation-duration: 24s;
     }
 
-    .bg-blob:nth-child(3) {
-      width: 300px;
-      height: 300px;
-      background: #c3aed6;
-      top: 50%;
-      left: 60%;
-      animation-delay: -10s;
-      animation-duration: 25s;
+    .blob.b2 {
+      width: 420px;
+      height: 420px;
+      background: #f0abfc;
+      bottom: -16%;
+      right: -8%;
+      animation-delay: -6s;
+      animation-duration: 19s;
+    }
+
+    .blob.b3 {
+      width: 360px;
+      height: 360px;
+      background: #67e8f9;
+      top: 46%;
+      left: 58%;
+      animation-delay: -12s;
+      animation-duration: 27s;
     }
 
     @keyframes float {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(30px, -20px) scale(1.05); }
-      50% { transform: translate(-20px, 30px) scale(0.95); }
-      75% { transform: translate(20px, 20px) scale(1.02); }
+      25% { transform: translate(40px, -28px) scale(1.06); }
+      50% { transform: translate(-28px, 36px) scale(0.94); }
+      75% { transform: translate(24px, 24px) scale(1.03); }
     }
 
-    /* Top bar */
-    .top-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 32px;
-      pointer-events: none;
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    .header {
-      text-align: left;
-      pointer-events: auto;
-    }
-
-    .header h1 {
-      font-size: 22px;
-      font-weight: 600;
-      color: #1d1d1f;
-      letter-spacing: 2px;
-    }
-
-    .header p {
-      margin-top: 4px;
-      font-size: 13px;
-      color: #86868b;
-    }
-
-    .nav-grid,
-    .footer {
+    /* ---------- 主体 ---------- */
+    main {
       position: relative;
       z-index: 1;
+      flex: 1;
+      width: 100%;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 44px 40px 32px;
     }
 
+    .hero {
+      text-align: left;
+      margin-bottom: 40px;
+      animation: rise 0.7s ease-out both;
+    }
+
+    .hero h1 {
+      width: fit-content;
+      font-size: clamp(40px, 5.5vw, 64px);
+      font-weight: 800;
+      letter-spacing: 4px;
+      line-height: 1.15;
+      background: var(--title-gradient);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      animation: shimmer 16s linear infinite;
+    }
+
+    /* 单向匀速滑动一个色环周期，首尾帧相同 → 无缝循环 */
+    @keyframes shimmer {
+      from { background-position: 100% 50%; }
+      to { background-position: 0% 50%; }
+    }
+
+    .hero .tagline {
+      margin-top: 14px;
+      font-size: clamp(14px, 1.6vw, 16px);
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+    }
+
+    /* ---------- 工具分类 ---------- */
+    .sections {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      width: 100%;
+    }
+
+    .sections section { --s: 0s; }
+    .sections section:nth-child(2) { --s: 0.12s; }
+    .sections section:nth-child(3) { --s: 0.24s; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--text);
+      margin-bottom: 16px;
+      animation: rise 0.6s ease-out both;
+      animation-delay: var(--s);
+    }
+
+    .section-title .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sections section:nth-child(1) .dot { background: linear-gradient(135deg, #6366f1, #22d3ee); }
+    .sections section:nth-child(2) .dot { background: linear-gradient(135deg, #a855f7, #ec4899); }
+    .sections section:nth-child(3) .dot { background: linear-gradient(135deg, #f59e0b, #f43f5e); }
+
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--card-border);
+    }
+
+    /* ---------- 导航卡片 ---------- */
     .nav-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 32px;
-      justify-content: center;
-      padding: 0 24px;
+      gap: 20px;
+      justify-content: flex-start;
+      width: 100%;
     }
 
-    .nav-item {
+    .card {
+      position: relative;
+      width: 212px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      text-align: center;
       text-decoration: none;
-      transition: transform 0.2s ease;
+      padding: 26px 18px 22px;
+      border-radius: 22px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.4s ease;
+      overflow: hidden;
+      animation: rise 0.6s ease-out both;
+      /* 分区基础延迟 + 卡片序号延迟 */
+      animation-delay: calc(var(--s, 0s) + var(--c, 0s));
     }
 
-    .nav-item:hover {
-      transform: translateY(-4px);
+    .card:nth-child(1) { --c: 0.05s; }
+    .card:nth-child(2) { --c: 0.11s; }
+    .card:nth-child(3) { --c: 0.17s; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .nav-item img {
-      width: 120px;
-      height: 120px;
-      border-radius: 24px;
+    /* 鼠标跟随光斑 */
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), var(--spotlight), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--card-shadow-hover);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .card:hover::after {
+      opacity: 1;
+    }
+
+    .card img {
+      width: 68px;
+      height: 68px;
+      border-radius: 17px;
       object-fit: cover;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      border: 1px solid rgba(0, 0, 0, 0.15);
-      transition: box-shadow 0.2s ease;
+      box-shadow: 0 4px 14px rgba(17, 24, 39, 0.12);
+      transition: transform 0.25s ease;
     }
 
-    .nav-item:hover img {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    .card:hover img {
+      transform: scale(1.07);
     }
 
-    .nav-item span {
-      margin-top: 12px;
+    .card .name {
+      margin-top: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .card .desc {
+      margin-top: 6px;
+      font-size: 12.5px;
+      color: var(--text-tertiary);
+    }
+
+    .card .arrow {
+      position: absolute;
+      top: 14px;
+      right: 16px;
       font-size: 14px;
-      font-weight: 500;
-      color: #1d1d1f;
+      color: var(--text-tertiary);
+      opacity: 0;
+      transform: translate(-4px, 4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
     }
 
-    .footer {
+    .card:hover .arrow {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+
+    /* ---------- 主题切换 ---------- */
+    .theme-switch {
       position: fixed;
-      bottom: 24px;
+      top: 18px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+
+    .theme-switch .thumb {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      width: 52px;
+      height: calc(100% - 8px);
+      border-radius: 999px;
+      background: var(--switch-thumb);
+      box-shadow: 0 1px 6px rgba(17, 24, 39, 0.12);
+      transform: translateX(4px);
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.4s ease;
+    }
+
+    .theme-switch[data-active="0"] .thumb { transform: translateX(4px); }
+    .theme-switch[data-active="1"] .thumb { transform: translateX(56px); }
+    .theme-switch[data-active="2"] .thumb { transform: translateX(108px); }
+
+    .theme-switch button {
+      position: relative;
+      z-index: 1;
+      width: 52px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-family: inherit;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.25s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .theme-switch button.active {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* ---------- 页脚 ---------- */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px;
       font-size: 12px;
-      color: #c7c7cc;
+      letter-spacing: 2px;
+      color: var(--text-tertiary);
+    }
+
+    /* ---------- 响应式 ---------- */
+    @media (max-width: 540px) {
+      main { padding: 36px 20px 24px; }
+      .hero { margin-bottom: 36px; }
+      .sections { gap: 28px; }
+      .nav-grid { gap: 14px; }
+      .card { width: calc(50% - 7px); padding: 20px 12px 18px; }
+      .card img { width: 56px; height: 56px; border-radius: 14px; }
+      .theme-switch { top: 14px; right: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blob, .hero h1, .hero, .card, .section-title { animation: none; }
+      .card, .card img, .card::after, .card .arrow, .theme-switch .thumb { transition: none; }
     }
   </style>
 </head>
 <body>
   <!-- 背景装饰 -->
-  <div class="bg-blob"></div>
-  <div class="bg-blob"></div>
-  <div class="bg-blob"></div>
+  <div class="bg">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="noise"></div>
+  </div>
 
-  <!-- 顶部栏 -->
-  <div class="top-bar">
-    <div class="header">
-      <h1>猫凳导航</h1>
-      <p>常用工具，一键直达</p>
+  <!-- 主题切换 -->
+  <div class="theme-switch" data-active="2" role="group" aria-label="主题切换">
+    <span class="thumb"></span>
+    <button type="button" data-mode="light" aria-pressed="false">浅色</button>
+    <button type="button" data-mode="dark" aria-pressed="false">深色</button>
+    <button type="button" data-mode="auto" aria-pressed="false">自动</button>
+  </div>
+
+  <main>
+    <!-- 主标题 -->
+    <header class="hero">
+      <h1>猫凳系统</h1>
+      <p class="tagline">赛考教研常用工具，一键直达</p>
+    </header>
+
+    <!-- 工具分类 -->
+    <div class="sections">
+      <section>
+        <h2 class="section-title"><span class="dot"></span>在线题库</h2>
+        <nav class="nav-grid">
+          <a class="card" href="https://pic.xkloj.online" target="_blank">
+            <img src="pic.png" alt="猫凳题目图片生成">
+            <span class="name">猫凳题目图片生成</span>
+            <span class="desc">题目一键生成图片</span>
+            <span class="arrow">↗</span>
+          </a>
+
+          <a class="card" href="https://word.xkloj.online" target="_blank">
+            <img src="word.png" alt="Word文档解析">
+            <span class="name">Word文档解析</span>
+            <span class="desc">Word 内容快速解析</span>
+            <span class="arrow">↗</span>
+          </a>
+
+          <a class="card" href="https://scratch.xkloj.online" target="_blank">
+            <img src="scratch.png" alt="Scratch">
+            <span class="name">Scratch</span>
+            <span class="desc">图形化编程平台</span>
+            <span class="arrow">↗</span>
+          </a>
+
+          <a class="card" href="https://bgxoy.xkloj.online" target="_blank">
+            <img src="bgxoy.png" alt="背景坐标系生成">
+            <span class="name">背景坐标系生成</span>
+            <span class="desc">背景图叠加坐标系</span>
+            <span class="arrow">↗</span>
+          </a>
+
+          <a class="card" href="https://resize.xkloj.online" target="_blank">
+            <img src="resize_icon.png" alt="选项图尺寸统一">
+            <span class="name">选项图尺寸统一</span>
+            <span class="desc">ABCD选项图统一尺寸</span>
+            <span class="arrow">↗</span>
+          </a>
+        </nav>
+      </section>
+
+      <section>
+        <h2 class="section-title"><span class="dot"></span>核桃OJ</h2>
+        <nav class="nav-grid">
+          <a class="card" href="https://data.xkloj.online" target="_blank">
+            <img src="data.png" alt="测试点调整工具">
+            <span class="name">测试点调整工具</span>
+            <span class="desc">批量调整题目测试点</span>
+            <span class="arrow">↗</span>
+          </a>
+
+          <a class="card" href="https://objective.xkloj.online" target="_blank">
+            <img src="objective.png" alt="OJ客观题格式化">
+            <span class="name">OJ客观题格式化</span>
+            <span class="desc">客观题一键格式化</span>
+            <span class="arrow">↗</span>
+          </a>
+
+          <a class="card" href="https://htojgroup.xkloj.online" target="_blank">
+            <img src="htojgroup.png" alt="OJ小组快速导入">
+            <span class="name">OJ小组快速导入</span>
+            <span class="desc">小组名单批量导入</span>
+            <span class="arrow">↗</span>
+          </a>
+        </nav>
+      </section>
+
+      <section>
+        <h2 class="section-title"><span class="dot"></span>文本检查</h2>
+        <nav class="nav-grid">
+          <a class="card" href="https://check.xkloj.online" target="_blank">
+            <img src="check.png" alt="错别字检查">
+            <span class="name">错别字检查</span>
+            <span class="desc">文本错别字快速检查</span>
+            <span class="arrow">↗</span>
+          </a>
+        </nav>
+      </section>
     </div>
-  </div>
+  </main>
 
-  <div class="nav-grid">
-    <!-- 测试点调整工具 -->
-    <a class="nav-item" href="https://data.xkloj.online" target="_blank">
-      <img src="data.png" alt="测试点调整工具">
-      <span>测试点调整工具</span>
-    </a>
+  <footer>猫凳系统 · 简单高效</footer>
 
-    <!-- OJ客观题格式化 -->
-    <a class="nav-item" href="https://objective.xkloj.online" target="_blank">
-      <img src="objective.png" alt="OJ客观题格式化">
-      <span>OJ客观题格式化</span>
-    </a>
+  <script>
+    // 卡片鼠标跟随光斑
+    document.querySelectorAll('.card').forEach(function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var rect = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+      });
+    });
 
-    <!-- 猫凳题目图片生成 -->
-    <a class="nav-item" href="https://pic.xkloj.online" target="_blank">
-      <img src="pic.png" alt="猫凳题目图片生成">
-      <span>猫凳题目图片生成</span>
-    </a>
+    // 主题切换：浅色 / 深色 / 自动
+    var themeSwitch = document.querySelector('.theme-switch');
+    var themeButtons = themeSwitch.querySelectorAll('button');
 
-    <!-- Word文档解析 -->
-    <a class="nav-item" href="https://word.xkloj.online" target="_blank">
-      <img src="word.png" alt="Word文档解析">
-      <span>Word文档解析</span>
-    </a>
+    function setTheme(mode, save) {
+      document.documentElement.setAttribute('data-theme', mode);
+      themeButtons.forEach(function (btn, i) {
+        var active = btn.dataset.mode === mode;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+        if (active) themeSwitch.setAttribute('data-active', String(i));
+      });
+      if (save) {
+        try { localStorage.setItem('maodeng-theme', mode); } catch (e) {}
+      }
+    }
 
-    <!-- OJ小组快速导入 -->
-    <a class="nav-item" href="https://htojgroup.xkloj.online" target="_blank">
-      <img src="htojgroup.png" alt="OJ小组快速导入">
-      <span>OJ小组快速导入</span>
-    </a>
+    themeButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setTheme(btn.dataset.mode, true);
+      });
+    });
 
-    <!-- 错别字检查 -->
-    <a class="nav-item" href="https://check.xkloj.online" target="_blank">
-      <img src="check.png" alt="错别字检查">
-      <span>错别字检查</span>
-    </a>
-  </div>
-
-  <div class="footer">猫凳导航 · 简单高效</div>
+    // 同步首屏脚本已应用的主题到开关 UI
+    setTheme(document.documentElement.getAttribute('data-theme') || 'auto', false);
+  </script>
 </body>
 </html>

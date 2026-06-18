@@ -8,399 +8,193 @@
   <script src="xlsx.full.min.js"></script>
   <style>
     :root {
-      --primary: #4a6cf7;
-      --primary-hover: #3b5de7;
-      --danger: #e74c3c;
-      --danger-hover: #c0392b;
-      --success: #27ae60;
-      --bg: #f0f2f5;
-      --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --text: #1a202c;
-      --text-secondary: #64748b;
-      --radius: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --accent: #6366f1;
+      --accent2: #9333ea;
+      --ok: #16a34a;
+      --err: #dc2626;
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+      --mono: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
     }
 
-    .app-header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    .topbar {
+      display: flex; align-items: center; gap: 16px; padding: 16px 28px;
+      border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 20;
     }
+    .back { flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease; }
+    .back:hover { color: var(--text); border-color: var(--accent); }
+    .title-wrap h1 { font-size: 21px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+    .spacer { flex: 1; }
 
-    .app-header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--primary);
-    }
+    .app { display: flex; gap: 20px; align-items: stretch; max-width: 1440px; margin: 0 auto; padding: 22px 24px 40px; }
 
-    .header-hint {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .app-layout {
-      display: flex;
-      height: calc(100vh - 53px);
-      overflow: hidden;
-    }
-
-    /* Left Panel */
+    /* 左侧输入面板（保留 .left-panel，供拖拽改宽脚本使用） */
     .left-panel {
-      width: 400px;
-      min-width: 280px;
-      max-width: 600px;
-      background: var(--card-bg);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      width: 400px; min-width: 280px; max-width: 600px; flex-shrink: 0;
+      display: flex; flex-direction: column;
     }
-
-    /* Resizer handle */
-    .panel-resizer {
-      width: 6px;
-      cursor: col-resize;
-      background: transparent;
-      position: relative;
-      flex-shrink: 0;
-      z-index: 10;
-      transition: background 0.15s;
-    }
-    .panel-resizer:hover,
-    .panel-resizer.active {
-      background: var(--primary);
-      opacity: 0.4;
-    }
-    .panel-resizer::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 2px;
-      height: 30px;
-      background: #cbd5e1;
-      border-radius: 1px;
-      transition: background 0.15s;
-    }
-    .panel-resizer:hover::after,
-    .panel-resizer.active::after {
-      background: var(--primary);
+    .panel-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; overflow: hidden; flex: 1;
     }
 
     .panel-toolbar {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-      background: #fafbfc;
-      align-items: center;
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
     }
-
-    .panel-toolbar .label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-    }
+    .panel-toolbar .label { font-size: 14.5px; font-weight: 600; color: var(--text); }
+    .id-count { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
 
     .panel-content {
-      flex: 1;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow-y: auto;
+      flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
     }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group > label { font-size: 12.5px; color: var(--muted); font-weight: 500; }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    textarea {
+      width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; resize: vertical;
+      font-family: var(--mono); font-size: 13px; line-height: 1.65; color: #1e293b; background: #fff; outline: none;
+      min-height: 240px;
     }
-
-    .form-group label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .form-group textarea {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.15s;
-      width: 100%;
-      resize: vertical;
-      min-height: 200px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      line-height: 1.6;
-    }
-
-    .form-group textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
-    }
-
-    .form-group textarea::placeholder {
-      color: #b0bec5;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
-    }
-
-    .id-count {
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-align: right;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 7px 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-
-    .btn:hover { border-color: var(--primary); color: var(--primary); }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-    }
-    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
-
-    .btn-sm {
-      padding: 4px 10px;
-      font-size: 12px;
-    }
-
-    .btn-danger { color: var(--danger); border-color: var(--danger); }
-    .btn-danger:hover { background: var(--danger); color: #fff; }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--faint); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; }
 
     .action-bar {
-      padding: 16px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-      background: #fafbfc;
+      padding: 14px 16px; border-top: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: center;
     }
+    .action-bar .btn { flex: 1; justify-content: center; }
 
-    .action-bar .btn {
-      flex: 1;
-      justify-content: center;
-      padding: 10px 14px;
-      font-size: 14px;
+    .btn {
+      font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 14px; border-radius: 9px;
+      border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer;
+      transition: all 0.18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
     }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border: none; color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .btn.primary:hover { color: #fff; filter: brightness(1.06); }
+    .btn.danger { color: var(--err); }
+    .btn.danger:hover { border-color: var(--err); color: var(--err); }
 
-    /* Right Panel */
-    .right-panel {
-      flex: 1;
-      overflow: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #e8ecf1;
+    /* 拖拽改宽手柄 */
+    .panel-resizer {
+      width: 8px; align-self: stretch; cursor: col-resize; flex-shrink: 0; position: relative;
+      border-radius: 999px; transition: background 0.15s ease;
     }
+    .panel-resizer::after {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 3px; height: 34px; background: #d4d8e2; border-radius: 999px; transition: background 0.15s ease;
+    }
+    .panel-resizer:hover::after, .panel-resizer.active::after { background: var(--accent); }
 
+    /* 右侧预览面板 */
+    .right-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     .preview-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      width: 100%;
-      max-width: 600px;
-      overflow: hidden;
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
+      overflow: hidden; flex: 1; display: flex; flex-direction: column;
     }
-
     .preview-card-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fafbfc;
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
     }
+    .preview-card-header .title { font-size: 14.5px; font-weight: 600; color: var(--text); }
+    .preview-card-header .count { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
 
-    .preview-card-header .title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-    }
+    .table-wrapper { flex: 1; overflow-y: auto; }
 
-    .preview-card-header .count {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .table-wrapper {
-      max-height: calc(100vh - 180px);
-      overflow-y: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    table thead {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
+    table { width: 100%; border-collapse: collapse; }
+    table thead { position: sticky; top: 0; z-index: 1; }
     table th {
-      background: var(--primary);
-      color: #fff;
-      padding: 10px 16px;
-      text-align: left;
-      font-size: 13px;
-      font-weight: 600;
+      background: #f7f8fb; color: var(--muted); padding: 11px 18px; text-align: left;
+      font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border);
     }
-
-    table th .col-index {
-      display: inline-block;
-      width: 22px;
-      height: 22px;
-      line-height: 22px;
-      text-align: center;
-      background: rgba(255,255,255,0.2);
-      border-radius: 4px;
-      font-size: 11px;
-      margin-right: 8px;
-    }
-
-    table td {
-      padding: 8px 16px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--border);
-      font-family: 'Consolas', 'Courier New', monospace;
-    }
-
+    table th .col-index,
     table td .row-index {
-      display: inline-block;
-      width: 22px;
-      height: 22px;
-      line-height: 22px;
-      text-align: center;
-      background: #f1f5f9;
-      border-radius: 4px;
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-right: 8px;
+      display: inline-block; min-width: 24px; height: 22px; line-height: 22px; text-align: center;
+      border-radius: 6px; font-size: 11px; margin-right: 10px; font-variant-numeric: tabular-nums;
     }
-
-    table tbody tr {
-      transition: background 0.1s;
+    table th .col-index { background: rgba(99, 102, 241, 0.12); color: var(--accent); }
+    table td .row-index { background: #f1f5f9; color: var(--faint); }
+    table td {
+      padding: 9px 18px; font-size: 13px; color: var(--text);
+      border-bottom: 1px solid var(--border); font-family: var(--mono);
     }
+    table tbody tr { transition: background 0.1s ease; }
+    table tbody tr:nth-child(even) { background: #fafbfc; }
+    table tbody tr:hover { background: rgba(99, 102, 241, 0.05); }
 
-    table tbody tr:hover {
-      background: #f8fafc;
-    }
-
-    table tbody tr:nth-child(even) {
-      background: #fafbfc;
-    }
-
-    table tbody tr:nth-child(even):hover {
-      background: #f1f5f9;
-    }
-
-    .empty-preview {
-      padding: 60px 20px;
-      text-align: center;
-      color: #94a3b8;
-    }
-
+    .empty-preview { padding: 64px 24px; text-align: center; color: var(--faint); }
     .empty-preview .icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-      opacity: 0.4;
+      width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(99, 102, 241, 0.08); color: var(--accent);
     }
+    .empty-preview .icon svg { width: 28px; height: 28px; }
+    .empty-preview .text { font-size: 13.5px; line-height: 1.6; }
 
-    .empty-preview .text {
-      font-size: 14px;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
+    /* 滚动条 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar-thumb { background: #d4d8e2; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #b6bccb; }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      top: 70px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: #1a202c;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      opacity: 0;
-      transition: all 0.3s;
-      z-index: 9999;
-      pointer-events: none;
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(22, 24, 29, 0.92); color: #fff; padding: 10px 20px; border-radius: 999px;
+      font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 50;
     }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+    @media (max-width: 960px) {
+      .app { flex-direction: column; align-items: stretch; }
+      .left-panel { width: 100% !important; max-width: none; }
+      .panel-resizer { display: none; }
+      textarea { min-height: 180px; }
     }
   </style>
 </head>
 <body>
 
-<div class="app-header">
-  <h1>核桃OJ快速导入</h1>
-  <span class="header-hint">输入用户ID，生成Excel表格并下载</span>
-</div>
+<header class="topbar">
+  <a class="back" href="https://maodeng.xkloj.online">← 猫凳系统</a>
+  <div class="title-wrap">
+    <h1>核桃OJ快速导入</h1>
+    <p>OJ 小组名单批量导入</p>
+  </div>
+  <span class="spacer"></span>
+</header>
 
-<div class="app-layout">
+<div class="app">
   <!-- Left Panel: Input -->
   <div class="left-panel">
-    <div class="panel-toolbar">
-      <span class="label">用户ID输入</span>
-      <div style="flex:1"></div>
-      <span class="id-count" id="idCount">共 0 个ID</span>
-    </div>
-    <div class="panel-content">
-      <div class="form-group">
-        <label>每行输入一个用户ID</label>
-        <textarea id="idInput" placeholder="请输入用户ID，每行一个&#10;例如：&#10;10001&#10;10002&#10;10003" oninput="updatePreview()"></textarea>
+    <div class="panel-card">
+      <div class="panel-toolbar">
+        <span class="label">用户ID输入</span>
+        <span class="id-count" id="idCount">共 0 个ID</span>
       </div>
-    </div>
-    <div class="action-bar">
-      <button class="btn btn-sm btn-danger" onclick="clearInput()">清空</button>
-      <button class="btn btn-primary" onclick="generateExcel()">生成表格</button>
+      <div class="panel-content">
+        <div class="form-group">
+          <label>每行输入一个用户ID</label>
+          <textarea id="idInput" placeholder="请输入用户ID，每行一个&#10;例如：&#10;10001&#10;10002&#10;10003" oninput="updatePreview()"></textarea>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn danger" onclick="clearInput()">清空</button>
+        <button class="btn primary" onclick="generateExcel()">生成表格</button>
+      </div>
     </div>
   </div>
 
@@ -416,7 +210,7 @@
       </div>
       <div class="table-wrapper" id="tableWrapper">
         <div class="empty-preview" id="emptyPreview">
-          <div class="icon">📋</div>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6"/><path d="M8 11h8M8 15h5"/></svg></div>
           <div class="text">在左侧输入用户ID后，这里将实时显示预览</div>
         </div>
       </div>
@@ -424,9 +218,11 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
 <script>
+var EMPTY_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6"/><path d="M8 11h8M8 15h5"/></svg>';
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -453,7 +249,7 @@ function updatePreview() {
     const emptyDiv = document.createElement('div');
     emptyDiv.className = 'empty-preview';
     emptyDiv.id = 'emptyPreview';
-    emptyDiv.innerHTML = '<div class="icon">📋</div><div class="text">在左侧输入用户ID后，这里将实时显示预览</div>';
+    emptyDiv.innerHTML = '<div class="icon">' + EMPTY_ICON_SVG + '</div><div class="text">在左侧输入用户ID后，这里将实时显示预览</div>';
     wrapper.appendChild(emptyDiv);
     return;
   }

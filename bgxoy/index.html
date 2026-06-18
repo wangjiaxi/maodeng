@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.png">
+  <title>背景坐标系生成器</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --accent: #6366f1;
+      --accent2: #9333ea;
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex; align-items: center; gap: 18px; padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 20;
+    }
+    .back {
+      flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none;
+      padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease;
+    }
+    .back:hover { color: var(--text); border-color: var(--accent); }
+    .title-wrap h1 {
+      font-size: 22px; font-weight: 800; letter-spacing: 1px;
+      background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+
+    .app { display: flex; gap: 20px; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 22px 24px 40px; }
+    .stage { flex: 1; min-width: 0; position: sticky; top: 88px; display: flex; flex-direction: column; gap: 12px; }
+    .panel { width: 356px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+
+    .canvas-wrap {
+      position: relative;
+      background:
+        linear-gradient(45deg, #eceef3 25%, transparent 25%, transparent 75%, #eceef3 75%) 0 0/22px 22px,
+        linear-gradient(45deg, #eceef3 25%, #f7f8fb 25%, #f7f8fb 75%, #eceef3 75%) 11px 11px/22px 22px;
+      border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+      min-height: 340px; display: flex; align-items: center; justify-content: center; padding: 14px; overflow: hidden;
+    }
+    canvas#cv { max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 6px 20px rgba(17,24,39,0.15); display: none; touch-action: none; }
+    body.has-image canvas#cv { display: block; }
+
+    .dropzone {
+      position: absolute; inset: 14px; border: 2px dashed #c4c9d4; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer;
+      color: var(--muted); background: rgba(255,255,255,0.55); transition: all 0.2s ease;
+    }
+    .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: rgba(99,102,241,0.06); color: var(--accent); }
+    body.has-image .dropzone { display: none; }
+    .dz-icon { font-size: 40px; margin-bottom: 10px; }
+    .dz-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .dz-sub { font-size: 12.5px; margin-top: 6px; color: var(--faint); }
+
+    .toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 14px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
+    }
+    .coord-readout { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 132px; }
+    .spacer { flex: 1; }
+    .sel-inline { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+
+    details.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+    summary { list-style: none; cursor: pointer; padding: 14px 16px; font-size: 14.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; user-select: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: ""; width: 6px; height: 6px; border-right: 2px solid var(--faint); border-bottom: 2px solid var(--faint); transform: rotate(-45deg); transition: transform 0.2s ease; }
+    details[open] summary::before { transform: rotate(45deg); }
+    .card-body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 11px; }
+    .sub-hint { font-size: 12px; color: var(--faint); line-height: 1.5; }
+
+    .row { display: flex; align-items: center; gap: 10px; }
+    .row > span:first-child { width: 72px; flex-shrink: 0; font-size: 13px; color: var(--muted); }
+    .row input[type="range"] { flex: 1; min-width: 0; }
+    .row .val { width: 42px; text-align: right; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .indent { padding-left: 12px; border-left: 2px solid var(--border); margin-left: 2px; display: flex; flex-direction: column; gap: 11px; }
+
+    input[type="range"] { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: #e2e5ec; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+    input[type="color"] { -webkit-appearance: none; appearance: none; width: 38px; height: 28px; padding: 0; border: 1px solid var(--border); border-radius: 7px; background: none; cursor: pointer; }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+    input[type="number"], input[type="text"], select { font-family: inherit; font-size: 13px; color: var(--text); padding: 6px 9px; border: 1px solid var(--border); border-radius: 8px; background: #fff; outline: none; min-width: 0; }
+    input[type="number"] { width: 88px; }
+    select { cursor: pointer; }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .chk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
+    .chk.inline { font-size: 13px; color: var(--muted); }
+    .chk input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+
+    .btn { font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.18s ease; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border: none; color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .btn.primary:hover { color: #fff; filter: brightness(1.06); }
+    .btn.full { width: 100%; }
+    body:not(.has-image) .needs-image { opacity: 0.45; pointer-events: none; }
+
+    /* 自定义点（可编辑） */
+    .cp-add { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+    .cp-add input[type="number"] { width: 60px; }
+    .cp-add input[type="text"] { flex: 1; min-width: 80px; }
+    .cp-list { display: flex; flex-direction: column; gap: 6px; max-height: 230px; overflow-y: auto; }
+    .cp-row { display: flex; gap: 5px; align-items: center; }
+    .cp-row input[type="color"] { width: 28px; height: 26px; flex-shrink: 0; }
+    .cp-row input[type="number"] { width: 52px; padding: 5px 6px; }
+    .cp-row input[type="text"] { flex: 1; min-width: 40px; padding: 5px 7px; }
+    .cp-del { border: none; background: none; color: var(--faint); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 3px; flex-shrink: 0; }
+    .cp-del:hover { color: #ef4444; }
+    .cp-empty { font-size: 12.5px; color: var(--faint); text-align: center; padding: 6px 0; line-height: 1.5; }
+
+    /* 图层 / 角色 */
+    .ly-list { display: flex; flex-direction: column; gap: 8px; }
+    .ly-row { display: flex; flex-direction: column; gap: 7px; padding: 9px; background: #f7f8fb; border-radius: 9px; border: 1px solid transparent; }
+    .ly-row.sel { border-color: var(--accent); background: rgba(99,102,241,0.05); }
+    .ly-head { display: flex; align-items: center; gap: 8px; }
+    .ly-thumb { width: 34px; height: 34px; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; flex-shrink: 0; }
+    .ly-head .nm { flex: 1; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+    .ly-mini { border: none; background: #eceef3; color: var(--muted); width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1; }
+    .ly-mini:hover { background: #e0e3ea; color: var(--text); }
+    .ly-mini.del:hover { background: #fee2e2; color: #ef4444; }
+    .ly-xy { display: flex; gap: 8px; }
+    .ly-xy label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+    .ly-xy input { width: 56px; padding: 5px 6px; }
+    .ly-row .row > span:first-child { width: 48px; font-size: 12px; }
+
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(22,24,29,0.92); color: #fff; padding: 10px 20px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 50; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 960px) { .app { flex-direction: column; } .stage { position: static; width: 100%; } .panel { width: 100%; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="https://maodeng.xkloj.online">← 猫凳系统</a>
+    <div class="title-wrap">
+      <h1>背景坐标系生成器</h1>
+      <p>导入背景图，叠加可自定义的坐标轴、坐标点，并可添加角色图层</p>
+    </div>
+  </header>
+
+  <div class="app">
+    <section class="stage">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="cv"></canvas>
+        <div class="dropzone" id="dropzone">
+          <div>
+            <div class="dz-icon">🖼️</div>
+            <p class="dz-title">点击或拖拽上传背景图</p>
+            <p class="dz-sub">支持 PNG / JPG，也可直接 Ctrl/⌘ + V 粘贴</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <span class="coord-readout" id="readout">x: —　y: —</span>
+        <label class="chk inline"><input type="checkbox" data-param="clickAdd"> 点击画布加点</label>
+        <span class="spacer"></span>
+        <label class="sel-inline">导出
+          <select data-param="exportScale">
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+            <option value="3">3×</option>
+          </select>
+        </label>
+        <button class="btn" id="btnReplace">更换背景</button>
+        <button class="btn needs-image" id="btnCopy">复制</button>
+        <button class="btn primary needs-image" id="btnDownload">下载 PNG</button>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <!-- 坐标轴 -->
+      <details class="card" open>
+        <summary>坐标轴</summary>
+        <div class="card-body">
+          <label class="chk"><input type="checkbox" data-param="showAxes"> 显示坐标轴</label>
+          <div class="row"><span>颜色</span><input type="color" data-param="axisColor"></div>
+          <div class="row"><span>粗细</span><input type="range" min="1" max="12" step="0.5" data-param="axisWidth"><b class="val"></b></div>
+          <div class="row"><span>线形</span>
+            <select data-param="axisStyle"><option value="solid">实线</option><option value="dashed">虚线</option><option value="dotted">点线</option></select>
+          </div>
+          <label class="chk"><input type="checkbox" data-param="arrows"> 末端箭头</label>
+          <label class="chk"><input type="checkbox" data-param="extendAxes"> 坐标轴延伸到图片外</label>
+          <div class="indent">
+            <div class="row"><span>延伸量</span><input type="range" min="8" max="120" step="2" data-param="axisMargin"><b class="val"></b></div>
+            <label class="chk"><input type="checkbox" data-param="padTransparent"> 外延区透明</label>
+            <div class="row"><span>外延底色</span><input type="color" data-param="padColor"></div>
+          </div>
+          <label class="chk"><input type="checkbox" data-param="showTicks"> 刻度线</label>
+          <div class="row"><span>刻度长</span><input type="range" min="2" max="20" step="1" data-param="tickLen"><b class="val"></b></div>
+          <div class="row"><span>轴步长</span><input type="number" min="5" step="5" data-param="axisStep"></div>
+          <label class="chk"><input type="checkbox" data-param="showLabels"> 数字标签</label>
+          <div class="row"><span>标签色</span><input type="color" data-param="labelColor"></div>
+          <div class="row"><span>标签字号</span><input type="range" min="8" max="48" step="1" data-param="labelSize"><b class="val"></b></div>
+          <label class="chk"><input type="checkbox" data-param="labelHalo"> 标签白色描边（更清晰）</label>
+          <label class="chk"><input type="checkbox" data-param="showZero"> 显示原点 0</label>
+        </div>
+      </details>
+
+      <!-- 坐标点 / 网格 -->
+      <details class="card">
+        <summary>坐标点 / 网格</summary>
+        <div class="card-body">
+          <div class="row"><span>样式</span>
+            <select data-param="gridStyle">
+              <option value="none">不显示</option>
+              <option value="dot">圆点</option>
+              <option value="plus">加号 +</option>
+              <option value="cross">叉号 ×</option>
+              <option value="grid">网格线</option>
+            </select>
+          </div>
+          <div class="row"><span>步长</span><input type="number" min="5" step="5" data-param="pointStep"></div>
+          <div class="row"><span>点大小</span><input type="range" min="0.5" max="14" step="0.5" data-param="pointSize"><b class="val"></b></div>
+          <div class="row"><span>线宽</span><input type="range" min="0.5" max="6" step="0.5" data-param="gridWidth"><b class="val"></b></div>
+          <div class="row"><span>颜色</span><input type="color" data-param="gridColor"></div>
+          <div class="row"><span>透明度</span><input type="range" min="0" max="1" step="0.05" data-param="gridOpacity"><b class="val"></b></div>
+        </div>
+      </details>
+
+      <!-- 自定义点 -->
+      <details class="card" open>
+        <summary>自定义点</summary>
+        <div class="card-body">
+          <div class="cp-add">
+            <input type="number" id="cpX" placeholder="X">
+            <input type="number" id="cpY" placeholder="Y">
+            <input type="text" id="cpLabel" placeholder="标签（可选）">
+            <input type="color" id="cpColorPick" value="#ef4444">
+            <button class="btn primary" id="btnAddPoint">添加</button>
+          </div>
+          <p class="sub-hint">勾选工具条「点击画布加点」后，可直接在图上点选；下方列表里能逐个修改坐标值、标签和颜色。</p>
+          <div class="row"><span>点大小</span><input type="range" min="2" max="18" step="1" data-param="cpSize"><b class="val"></b></div>
+          <label class="chk"><input type="checkbox" data-param="showGuides"> 显示到坐标轴的连线</label>
+          <div class="row"><span>连线线形</span>
+            <select data-param="guideStyle"><option value="dashed">虚线</option><option value="solid">实线</option><option value="dotted">点线</option></select>
+          </div>
+          <label class="chk"><input type="checkbox" data-param="guideLabels"> 连线标注坐标值</label>
+          <div class="cp-list" id="cpList"></div>
+          <button class="btn full" id="btnClearPoints">清空所有点</button>
+        </div>
+      </details>
+
+      <!-- 图层 / 角色 -->
+      <details class="card" open>
+        <summary>图层 / 角色</summary>
+        <div class="card-body">
+          <button class="btn primary full" id="btnAddLayer">＋ 添加角色图</button>
+          <p class="sub-hint">上传后在画布上<b>直接拖动</b>即可摆放，或在下方精确填写坐标；可缩放、旋转、调透明度与层级。也可把图片直接拖到画布上添加。</p>
+          <div class="ly-list" id="lyList"></div>
+        </div>
+      </details>
+
+      <!-- 坐标系设置 -->
+      <details class="card">
+        <summary>坐标系设置</summary>
+        <div class="card-body">
+          <div class="row"><span>X 范围 ±</span><input type="number" min="10" step="10" data-param="rangeX"></div>
+          <div class="row"><span>Y 范围 ±</span><input type="number" min="10" step="10" data-param="rangeY"></div>
+          <div class="row"><span>原点偏移X</span><input type="range" min="-240" max="240" step="1" data-param="originX"><b class="val"></b></div>
+          <div class="row"><span>原点偏移Y</span><input type="range" min="-180" max="180" step="1" data-param="originY"><b class="val"></b></div>
+          <button class="btn full" id="btnPreset">重置为 Scratch 舞台 (480×360)</button>
+        </div>
+      </details>
+
+      <!-- 图片调整 -->
+      <details class="card">
+        <summary>背景图片调整</summary>
+        <div class="card-body">
+          <div class="row"><span>亮度</span><input type="range" min="-100" max="100" step="1" data-param="brightness"><b class="val"></b></div>
+          <div class="row"><span>曝光</span><input type="range" min="-100" max="100" step="1" data-param="exposure"><b class="val"></b></div>
+          <div class="row"><span>对比度</span><input type="range" min="-100" max="100" step="1" data-param="contrast"><b class="val"></b></div>
+          <div class="row"><span>饱和度</span><input type="range" min="-100" max="100" step="1" data-param="saturation"><b class="val"></b></div>
+          <button class="btn full" id="btnResetImg">重置图片调整</button>
+        </div>
+      </details>
+    </aside>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" hidden>
+  <input type="file" id="layerInput" accept="image/*" multiple hidden>
+
+  <script>
+    /* ============ 状态 ============ */
+    var params = {
+      // 坐标轴
+      showAxes: true, axisColor: '#1f2937', axisWidth: 3, axisStyle: 'solid', arrows: true,
+      extendAxes: false, axisMargin: 40, padTransparent: true, padColor: '#ffffff',
+      showTicks: true, tickLen: 7, axisStep: 60,
+      showLabels: true, labelColor: '#1f2937', labelSize: 15, labelHalo: true, showZero: false,
+      // 网格 / 坐标点（默认不显示）
+      gridStyle: 'none', pointStep: 60, pointSize: 3, gridWidth: 1.5, gridColor: '#475569', gridOpacity: 0.5,
+      // 自定义点
+      cpSize: 6, showGuides: true, guideStyle: 'dashed', guideLabels: true,
+      // 坐标系
+      rangeX: 240, rangeY: 180, originX: 0, originY: 0,
+      // 图片
+      brightness: 0, exposure: 0, contrast: 0, saturation: 0,
+      // 其它
+      exportScale: 1, clickAdd: true
+    };
+    var IMG_PARAMS = { brightness: 1, exposure: 1, contrast: 1, saturation: 1 };
+
+    var customPoints = [];
+    var layers = [];                 // {img, x, y, scale, rotation, opacity}
+    var selectedLayer = -1;
+    var currentImg = null, baseCanvas = null, adjustedCanvas = null;
+    var imgW = 0, imgH = 0, pad = 0, CW = 0, CH = 0, adjustDirty = true;
+
+    var cv = document.getElementById('cv');
+    var dropzone = document.getElementById('dropzone');
+    var canvasWrap = document.getElementById('canvasWrap');
+    var readout = document.getElementById('readout');
+    var fileInput = document.getElementById('fileInput');
+    var layerInput = document.getElementById('layerInput');
+    var cpList = document.getElementById('cpList');
+    var lyList = document.getElementById('lyList');
+
+    /* ============ 基础工具 ============ */
+    function fontStr(size) { return size + 'px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif'; }
+    function scaleX() { return imgW / (2 * Math.max(1, params.rangeX)); }
+    function scaleY() { return imgH / (2 * Math.max(1, params.rangeY)); }
+    function curPad() { return params.extendAxes ? params.axisMargin : 0; }
+    function computeFrame() { pad = curPad(); CW = imgW + 2 * pad; CH = imgH + 2 * pad; }
+
+    // stage 坐标 -> 画布像素（含外延 pad，原点默认在图片中心，y 向上）
+    function toPx(sx, sy) {
+      return [pad + imgW / 2 + (params.originX + sx) * scaleX(), pad + imgH / 2 - (params.originY + sy) * scaleY()];
+    }
+    function eventToPx(e) {
+      var r = cv.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width * CW, (e.clientY - r.top) / r.height * CH];
+    }
+    function pxToStage(px, py) {
+      return { x: (px - pad - imgW / 2) / scaleX() - params.originX, y: (pad + imgH / 2 - py) / scaleY() - params.originY };
+    }
+    function eventToStage(e) { var p = eventToPx(e); var s = pxToStage(p[0], p[1]); return { x: Math.round(s.x), y: Math.round(s.y) }; }
+
+    function multiples(step, lo, hi) {
+      var out = [];
+      if (step <= 0) return out;
+      var start = Math.ceil(lo / step) * step;
+      for (var v = start; v <= hi + 1e-6; v += step) out.push(Math.round(v * 1e6) / 1e6);
+      return out;
+    }
+    function dashFor(style, w) {
+      if (style === 'dashed') return [Math.max(6, w * 3), Math.max(4, w * 2)];
+      if (style === 'dotted') return [0.1, Math.max(3, w * 2.2)];
+      return [];
+    }
+
+    /* ============ 图片调整 ============ */
+    function applyImageAdjust(d) {
+      var expG = Math.pow(2, params.exposure / 50);
+      var bAdd = params.brightness * 1.2;
+      var C = params.contrast / 100 * 255;
+      var cF = (259 * (C + 255)) / (255 * (259 - C));
+      var sF = 1 + params.saturation / 100;
+      for (var i = 0; i < d.length; i += 4) {
+        var r = d[i], g = d[i + 1], b = d[i + 2];
+        r *= expG; g *= expG; b *= expG;
+        r += bAdd; g += bAdd; b += bAdd;
+        r = cF * (r - 128) + 128; g = cF * (g - 128) + 128; b = cF * (b - 128) + 128;
+        var gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        d[i] = gray + (r - gray) * sF; d[i + 1] = gray + (g - gray) * sF; d[i + 2] = gray + (b - gray) * sF;
+      }
+    }
+    function buildAdjusted() {
+      if (!adjustedCanvas) adjustedCanvas = document.createElement('canvas');
+      adjustedCanvas.width = imgW; adjustedCanvas.height = imgH;
+      var a = adjustedCanvas.getContext('2d');
+      a.clearRect(0, 0, imgW, imgH);
+      a.drawImage(baseCanvas, 0, 0);
+      if (params.brightness || params.exposure || params.contrast || params.saturation) {
+        var id = a.getImageData(0, 0, imgW, imgH);
+        applyImageAdjust(id.data);
+        a.putImageData(id, 0, 0);
+      }
+      adjustDirty = false;
+    }
+
+    /* ============ 绘制 ============ */
+    function drawText(ctx, txt, x, y, o) {
+      ctx.font = fontStr(o.size);
+      ctx.textAlign = o.align || 'center';
+      ctx.textBaseline = o.baseline || 'middle';
+      if (o.halo) {
+        ctx.lineWidth = Math.max(2, o.size / 4);
+        ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+        ctx.lineJoin = 'round'; ctx.setLineDash([]);
+        ctx.strokeText(txt, x, y);
+      }
+      ctx.fillStyle = o.color;
+      ctx.fillText(txt, x, y);
+    }
+    // 数字标签：自动夹在画布范围内，避免端点 240/180 被截断
+    function drawAxisLabel(ctx, txt, x, y, align, baseline) {
+      ctx.font = fontStr(params.labelSize);
+      var w = ctx.measureText(txt).width, h = params.labelSize;
+      var l = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+      var rr = l + w;
+      if (l < 2) x += 2 - l; else if (rr > CW - 2) x -= (rr - (CW - 2));
+      var t = baseline === 'middle' ? y - h / 2 : baseline === 'top' ? y : y - h;
+      var bb = t + h;
+      if (t < 2) y += 2 - t; else if (bb > CH - 2) y -= (bb - (CH - 2));
+      drawText(ctx, txt, x, y, { color: params.labelColor, size: params.labelSize, halo: params.labelHalo, align: align, baseline: baseline });
+    }
+    function drawArrow(ctx, x, y, dir, len, half) {
+      ctx.setLineDash([]); ctx.beginPath();
+      if (dir === 'right') { ctx.moveTo(x, y); ctx.lineTo(x - len, y - half); ctx.lineTo(x - len, y + half); }
+      else if (dir === 'up') { ctx.moveTo(x, y); ctx.lineTo(x - half, y + len); ctx.lineTo(x + half, y + len); }
+      ctx.closePath(); ctx.fill();
+    }
+
+    function drawGrid(ctx) {
+      if (params.gridStyle === 'none') return;
+      var xs = multiples(params.pointStep, -params.rangeX - params.originX, params.rangeX - params.originX);
+      var ys = multiples(params.pointStep, -params.rangeY - params.originY, params.rangeY - params.originY);
+      ctx.save();
+      ctx.globalAlpha = params.gridOpacity;
+      ctx.strokeStyle = params.gridColor; ctx.fillStyle = params.gridColor; ctx.setLineDash([]);
+      if (params.gridStyle === 'grid') {
+        ctx.lineWidth = params.gridWidth;
+        xs.forEach(function (m) { var p = toPx(m, 0); ctx.beginPath(); ctx.moveTo(p[0], toPx(0, params.rangeY - params.originY)[1]); ctx.lineTo(p[0], toPx(0, -params.rangeY - params.originY)[1]); ctx.stroke(); });
+        ys.forEach(function (m) { var p = toPx(0, m); ctx.beginPath(); ctx.moveTo(toPx(-params.rangeX - params.originX, 0)[0], p[1]); ctx.lineTo(toPx(params.rangeX - params.originX, 0)[0], p[1]); ctx.stroke(); });
+      } else {
+        var r = params.pointSize;
+        xs.forEach(function (mx) {
+          ys.forEach(function (my) {
+            var p = toPx(mx, my), px = p[0], py = p[1];
+            if (params.gridStyle === 'dot') { ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill(); }
+            else if (params.gridStyle === 'plus') { ctx.lineWidth = params.gridWidth; ctx.beginPath(); ctx.moveTo(px - r, py); ctx.lineTo(px + r, py); ctx.moveTo(px, py - r); ctx.lineTo(px, py + r); ctx.stroke(); }
+            else if (params.gridStyle === 'cross') { ctx.lineWidth = params.gridWidth; ctx.beginPath(); ctx.moveTo(px - r, py - r); ctx.lineTo(px + r, py + r); ctx.moveTo(px + r, py - r); ctx.lineTo(px - r, py + r); ctx.stroke(); }
+          });
+        });
+      }
+      ctx.restore();
+    }
+
+    function drawAxes(ctx) {
+      if (!params.showAxes) return;
+      var o = toPx(0, 0), ox = o[0], oy = o[1];
+      var x0, x1, y0, y1;
+      if (params.extendAxes) { x0 = 0; x1 = CW; y0 = 0; y1 = CH; }
+      else { x0 = pad; x1 = pad + imgW; y0 = pad; y1 = pad + imgH; }
+      ctx.save();
+      ctx.strokeStyle = params.axisColor; ctx.fillStyle = params.axisColor; ctx.lineCap = 'round';
+      // 轴线
+      ctx.lineWidth = params.axisWidth; ctx.setLineDash(dashFor(params.axisStyle, params.axisWidth));
+      ctx.beginPath(); ctx.moveTo(x0, oy); ctx.lineTo(x1, oy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox, y1); ctx.lineTo(ox, y0); ctx.stroke();
+      // 箭头
+      if (params.arrows) {
+        var aw = params.axisWidth, len = 9 + aw * 2.2, half = 5 + aw * 1.5;
+        drawArrow(ctx, x1, oy, 'right', len, half);
+        drawArrow(ctx, ox, y0, 'up', len, half);
+      }
+      // 刻度 + 标签
+      if (params.showTicks || params.showLabels) {
+        var step = Math.max(1, params.axisStep);
+        ctx.setLineDash([]);
+        multiples(step, -params.rangeX - params.originX, params.rangeX - params.originX).forEach(function (m) {
+          if (m === 0) return;
+          var px = toPx(m, 0)[0];
+          if (params.showTicks) { ctx.lineWidth = Math.max(1, params.axisWidth * 0.8); ctx.beginPath(); ctx.moveTo(px, oy - params.tickLen); ctx.lineTo(px, oy + params.tickLen); ctx.stroke(); }
+          if (params.showLabels) drawAxisLabel(ctx, String(m), px, oy + params.tickLen + 3, 'center', 'top');
+        });
+        multiples(step, -params.rangeY - params.originY, params.rangeY - params.originY).forEach(function (m) {
+          if (m === 0) return;
+          var py = toPx(0, m)[1];
+          if (params.showTicks) { ctx.lineWidth = Math.max(1, params.axisWidth * 0.8); ctx.beginPath(); ctx.moveTo(ox - params.tickLen, py); ctx.lineTo(ox + params.tickLen, py); ctx.stroke(); }
+          if (params.showLabels) drawAxisLabel(ctx, String(m), ox - params.tickLen - 4, py, 'right', 'middle');
+        });
+        if (params.showZero) drawAxisLabel(ctx, '0', ox - params.tickLen - 4, oy + params.tickLen + 3, 'right', 'top');
+      }
+      ctx.restore();
+    }
+
+    function drawCustomPoints(ctx) {
+      var o = toPx(0, 0), ox = o[0], oy = o[1];
+      customPoints.forEach(function (cp) {
+        var p = toPx(cp.x, cp.y), px = p[0], py = p[1];
+        ctx.save();
+        if (params.showGuides) {
+          ctx.setLineDash(dashFor(params.guideStyle, 1.8)); ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.strokeStyle = cp.color;
+          ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, oy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ox, py); ctx.stroke();
+          ctx.setLineDash([]);
+          if (params.guideLabels) {
+            var gs = Math.max(11, params.cpSize * 1.7);
+            var below = oy < CH - 22;
+            drawText(ctx, String(cp.x), px, oy + (below ? 5 : -5), { color: cp.color, size: gs, halo: true, align: 'center', baseline: below ? 'top' : 'bottom' });
+            var leftSide = ox > 44;
+            drawText(ctx, String(cp.y), ox + (leftSide ? -6 : 6), py, { color: cp.color, size: gs, halo: true, align: leftSide ? 'right' : 'left', baseline: 'middle' });
+          }
+        }
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(px, py, params.cpSize, 0, Math.PI * 2);
+        ctx.fillStyle = cp.color; ctx.fill();
+        ctx.lineWidth = Math.max(1.5, params.cpSize * 0.35); ctx.strokeStyle = '#fff'; ctx.stroke();
+        var txt = (cp.label && cp.label.trim()) ? cp.label : '(' + cp.x + ', ' + cp.y + ')';
+        drawText(ctx, txt, px + params.cpSize + 4, py - params.cpSize - 4, { color: cp.color, size: Math.max(12, params.cpSize * 1.7), halo: true, align: 'left', baseline: 'bottom' });
+        ctx.restore();
+      });
+    }
+
+    function drawLayers(ctx) {
+      layers.forEach(function (L) {
+        if (!L.img.complete || !L.img.naturalWidth) return;
+        var c = toPx(L.x, L.y), w = L.img.naturalWidth * L.scale, h = L.img.naturalHeight * L.scale;
+        ctx.save();
+        ctx.globalAlpha = L.opacity;
+        ctx.translate(c[0], c[1]);
+        if (L.rotation) ctx.rotate(L.rotation * Math.PI / 180);
+        ctx.drawImage(L.img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      });
+    }
+    function drawSelection(ctx) {
+      if (selectedLayer < 0 || selectedLayer >= layers.length) return;
+      var L = layers[selectedLayer];
+      if (!L.img.naturalWidth) return;
+      var c = toPx(L.x, L.y), w = L.img.naturalWidth * L.scale, h = L.img.naturalHeight * L.scale;
+      ctx.save();
+      ctx.translate(c[0], c[1]); if (L.rotation) ctx.rotate(L.rotation * Math.PI / 180);
+      ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = '#6366f1';
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
+      ctx.restore();
+    }
+
+    function draw(ctx, scale, forExport) {
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      ctx.clearRect(0, 0, CW, CH);
+      if (params.extendAxes && !params.padTransparent) { ctx.fillStyle = params.padColor; ctx.fillRect(0, 0, CW, CH); }
+      ctx.drawImage(adjustedCanvas, pad, pad);
+      drawLayers(ctx);
+      drawGrid(ctx);
+      drawAxes(ctx);
+      drawCustomPoints(ctx);
+      if (!forExport) drawSelection(ctx);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    function render() {
+      if (!currentImg) return;
+      if (adjustDirty) buildAdjusted();
+      computeFrame();
+      cv.width = CW; cv.height = CH; cv.style.width = CW + 'px';
+      draw(cv.getContext('2d'), 1, false);
+    }
+
+    /* ============ 背景与图层载入 ============ */
+    function setBackground(im) {
+      currentImg = im;
+      imgW = im.naturalWidth || im.width; imgH = im.naturalHeight || im.height;
+      baseCanvas = document.createElement('canvas');
+      baseCanvas.width = imgW; baseCanvas.height = imgH;
+      baseCanvas.getContext('2d').drawImage(im, 0, 0);
+      adjustDirty = true;
+      document.body.classList.add('has-image');
+      render();
+    }
+    function loadBackgroundSrc(src) { var im = new Image(); im.onload = function () { setBackground(im); }; im.onerror = function () { alert('图片加载失败'); }; im.src = src; }
+    function handleBackgroundFiles(files) {
+      var f = pickImage(files); if (!f) return;
+      var rd = new FileReader(); rd.onload = function () { loadBackgroundSrc(rd.result); }; rd.readAsDataURL(f);
+    }
+    function pickImage(files) { for (var i = 0; i < files.length; i++) if (files[i].type && files[i].type.indexOf('image/') === 0) return files[i]; return null; }
+
+    function addLayerFromSrc(src, atStage) {
+      var im = new Image();
+      im.onload = function () {
+        var sc = (im.naturalWidth > imgW * 0.6) ? (imgW * 0.4 / im.naturalWidth) : 1;
+        layers.push({ img: im, x: atStage ? atStage.x : 0, y: atStage ? atStage.y : 0, scale: sc, rotation: 0, opacity: 1 });
+        selectedLayer = layers.length - 1;
+        refreshLayers(); render();
+      };
+      im.src = src;
+    }
+    function addLayerFiles(files, atStage) {
+      for (var i = 0; i < files.length; i++) {
+        if (files[i].type && files[i].type.indexOf('image/') === 0) {
+          (function (f) { var rd = new FileReader(); rd.onload = function () { addLayerFromSrc(rd.result, atStage); }; rd.readAsDataURL(f); })(files[i]);
+        }
+      }
+    }
+
+    /* ============ 自定义点（可编辑列表） ============ */
+    function addCustomPoint(x, y, label, color) { customPoints.push({ x: x, y: y, label: label || '', color: color || '#ef4444' }); refreshList(); render(); }
+    function refreshList() {
+      cpList.innerHTML = '';
+      if (!customPoints.length) { cpList.innerHTML = '<div class="cp-empty">还没有点。点击画布或上方输入框添加后，可在这里修改坐标值</div>'; return; }
+      customPoints.forEach(function (cp, i) {
+        var row = document.createElement('div'); row.className = 'cp-row';
+        var col = document.createElement('input'); col.type = 'color'; col.value = cp.color; col.oninput = function () { cp.color = col.value; render(); };
+        var ix = document.createElement('input'); ix.type = 'number'; ix.value = cp.x; ix.title = 'X'; ix.oninput = function () { var v = parseFloat(ix.value); if (!isNaN(v)) { cp.x = v; render(); } };
+        var iy = document.createElement('input'); iy.type = 'number'; iy.value = cp.y; iy.title = 'Y'; iy.oninput = function () { var v = parseFloat(iy.value); if (!isNaN(v)) { cp.y = v; render(); } };
+        var il = document.createElement('input'); il.type = 'text'; il.placeholder = '标签'; il.value = cp.label; il.oninput = function () { cp.label = il.value; render(); };
+        var del = document.createElement('button'); del.className = 'cp-del'; del.textContent = '×'; del.onclick = function () { customPoints.splice(i, 1); refreshList(); render(); };
+        row.appendChild(col); row.appendChild(ix); row.appendChild(iy); row.appendChild(il); row.appendChild(del);
+        cpList.appendChild(row);
+      });
+    }
+
+    /* ============ 图层（可编辑列表） ============ */
+    function mkMini(label, fn, cls) { var b = document.createElement('button'); b.className = 'ly-mini' + (cls ? ' ' + cls : ''); b.textContent = label; b.onclick = fn; return b; }
+    function lyRow(label, min, max, stp, val, fn) {
+      var r = document.createElement('div'); r.className = 'row';
+      var s = document.createElement('span'); s.textContent = label;
+      var inp = document.createElement('input'); inp.type = 'range'; inp.min = min; inp.max = max; inp.step = stp; inp.value = val;
+      var b = document.createElement('b'); b.className = 'val'; b.textContent = val;
+      inp.oninput = function () { b.textContent = inp.value; fn(parseFloat(inp.value)); render(); };
+      r.appendChild(s); r.appendChild(inp); r.appendChild(b); return r;
+    }
+    function refreshLayers() {
+      lyList.innerHTML = '';
+      if (!layers.length) { lyList.innerHTML = '<div class="cp-empty">还没有角色图。点上方按钮上传，或把图片拖到画布上</div>'; return; }
+      layers.forEach(function (L, i) {
+        var box = document.createElement('div'); box.className = 'ly-row' + (i === selectedLayer ? ' sel' : '');
+        var head = document.createElement('div'); head.className = 'ly-head';
+        var th = document.createElement('img'); th.className = 'ly-thumb'; th.src = L.img.src; th.onclick = function () { selectedLayer = i; refreshLayers(); render(); };
+        var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = '角色 ' + (i + 1); nm.onclick = function () { selectedLayer = i; refreshLayers(); render(); };
+        var up = mkMini('↑', function () { if (i < layers.length - 1) { var t = layers[i]; layers[i] = layers[i + 1]; layers[i + 1] = t; selectedLayer = i + 1; refreshLayers(); render(); } });
+        var dn = mkMini('↓', function () { if (i > 0) { var t = layers[i]; layers[i] = layers[i - 1]; layers[i - 1] = t; selectedLayer = i - 1; refreshLayers(); render(); } });
+        var del = mkMini('✕', function () { layers.splice(i, 1); if (selectedLayer >= layers.length) selectedLayer = layers.length - 1; refreshLayers(); render(); }, 'del');
+        up.title = '上移一层'; dn.title = '下移一层'; del.title = '删除';
+        head.appendChild(th); head.appendChild(nm); head.appendChild(up); head.appendChild(dn); head.appendChild(del);
+
+        var xy = document.createElement('div'); xy.className = 'ly-xy';
+        var lx = document.createElement('label'); lx.textContent = 'X'; var ix = document.createElement('input'); ix.type = 'number'; ix.value = Math.round(L.x); ix.oninput = function () { var v = parseFloat(ix.value); if (!isNaN(v)) { L.x = v; render(); } }; lx.appendChild(ix);
+        var ly = document.createElement('label'); ly.textContent = 'Y'; var iy = document.createElement('input'); iy.type = 'number'; iy.value = Math.round(L.y); iy.oninput = function () { var v = parseFloat(iy.value); if (!isNaN(v)) { L.y = v; render(); } }; ly.appendChild(iy);
+        xy.appendChild(lx); xy.appendChild(ly);
+
+        box.appendChild(head); box.appendChild(xy);
+        box.appendChild(lyRow('缩放', 0.05, 4, 0.05, L.scale, function (v) { L.scale = v; }));
+        box.appendChild(lyRow('旋转', -180, 180, 1, L.rotation, function (v) { L.rotation = v; }));
+        box.appendChild(lyRow('不透明', 0, 1, 0.05, L.opacity, function (v) { L.opacity = v; }));
+        lyList.appendChild(box);
+      });
+    }
+
+    /* ============ 导出 ============ */
+    function makeExportCanvas() {
+      computeFrame();
+      var s = parseFloat(params.exportScale) || 1;
+      var t = document.createElement('canvas');
+      t.width = Math.round(CW * s); t.height = Math.round(CH * s);
+      draw(t.getContext('2d'), s, true);
+      return t;
+    }
+    function exportPNG() { if (!currentImg) return; var a = document.createElement('a'); a.download = '背景坐标系.png'; a.href = makeExportCanvas().toDataURL('image/png'); a.click(); }
+    function copyPNG() {
+      if (!currentImg) return;
+      if (!navigator.clipboard || !window.ClipboardItem) { alert('当前浏览器不支持复制图片，请使用下载'); return; }
+      makeExportCanvas().toBlob(function (b) {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]).then(function () { toast('已复制到剪贴板'); }).catch(function (err) { alert('复制失败：' + err); });
+      });
+    }
+    function toast(msg) {
+      var t = document.getElementById('toast');
+      if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 1800);
+    }
+
+    /* ============ 控件绑定 ============ */
+    function setEl(el, v) { if (el.type === 'checkbox') el.checked = !!v; else el.value = v; }
+    function updateBadge(el) { var b = el.parentElement.querySelector('.val'); if (b) b.textContent = el.value; }
+    function bindControls() {
+      document.querySelectorAll('[data-param]').forEach(function (el) {
+        var k = el.dataset.param;
+        setEl(el, params[k]); updateBadge(el);
+        el.addEventListener('input', function () {
+          var v;
+          if (el.type === 'checkbox') v = el.checked;
+          else if (el.type === 'range' || el.type === 'number') { v = parseFloat(el.value); if (isNaN(v)) return; }
+          else v = el.value;
+          params[k] = v; updateBadge(el);
+          if (IMG_PARAMS[k]) adjustDirty = true;
+          render();
+        });
+      });
+    }
+    function syncInputs() { document.querySelectorAll('[data-param]').forEach(function (el) { setEl(el, params[el.dataset.param]); updateBadge(el); }); }
+
+    /* ============ 画布拖拽 / 点选 ============ */
+    function hitTestLayer(px, py) {
+      for (var i = layers.length - 1; i >= 0; i--) {
+        var L = layers[i]; if (!L.img.naturalWidth) continue;
+        var c = toPx(L.x, L.y), w = L.img.naturalWidth * L.scale, h = L.img.naturalHeight * L.scale;
+        if (px >= c[0] - w / 2 && px <= c[0] + w / 2 && py >= c[1] - h / 2 && py <= c[1] + h / 2) return i;
+      }
+      return -1;
+    }
+    var drag = null;
+    cv.addEventListener('pointerdown', function (e) {
+      if (!currentImg) return;
+      var p = eventToPx(e), s = pxToStage(p[0], p[1]);
+      var hit = hitTestLayer(p[0], p[1]);
+      if (hit >= 0) {
+        selectedLayer = hit; refreshLayers();
+        drag = { i: hit, gx: layers[hit].x - s.x, gy: layers[hit].y - s.y, moved: false };
+        cv.setPointerCapture(e.pointerId); render(); e.preventDefault();
+      } else {
+        drag = { i: -1, moved: false };
+        if (selectedLayer !== -1) { selectedLayer = -1; refreshLayers(); render(); }
+      }
+    });
+    cv.addEventListener('pointermove', function (e) {
+      var s = eventToStage(e);
+      readout.textContent = 'x: ' + s.x + '　y: ' + s.y;
+      if (drag && drag.i >= 0) {
+        var p = eventToPx(e), st = pxToStage(p[0], p[1]);
+        layers[drag.i].x = Math.round(st.x + drag.gx);
+        layers[drag.i].y = Math.round(st.y + drag.gy);
+        drag.moved = true; render();
+      }
+    });
+    cv.addEventListener('pointerleave', function () { readout.textContent = 'x: —　y: —'; });
+    window.addEventListener('pointerup', function (e) {
+      if (!drag) return;
+      if (drag.i >= 0 && drag.moved) refreshLayers();           // 拖动结束后同步列表里的 X/Y
+      else if (drag.i < 0 && !drag.moved && params.clickAdd && currentImg) {
+        var s = eventToStage(e);
+        addCustomPoint(s.x, s.y, document.getElementById('cpLabel').value.trim(), document.getElementById('cpColorPick').value);
+      }
+      drag = null;
+    });
+
+    /* ============ 其它事件 ============ */
+    bindControls(); refreshList(); refreshLayers();
+
+    fileInput.addEventListener('change', function (e) { handleBackgroundFiles(e.target.files); fileInput.value = ''; });
+    layerInput.addEventListener('change', function (e) { addLayerFiles(e.target.files); layerInput.value = ''; });
+    dropzone.addEventListener('click', function () { fileInput.click(); });
+    document.getElementById('btnReplace').addEventListener('click', function () { fileInput.click(); });
+    document.getElementById('btnAddLayer').addEventListener('click', function () { if (!currentImg) { alert('请先上传背景图'); return; } layerInput.click(); });
+
+    canvasWrap.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('drag'); });
+    canvasWrap.addEventListener('dragleave', function (e) { e.preventDefault(); dropzone.classList.remove('drag'); });
+    canvasWrap.addEventListener('drop', function (e) {
+      e.preventDefault(); dropzone.classList.remove('drag');
+      if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+      if (!currentImg) handleBackgroundFiles(e.dataTransfer.files);
+      else { var s = eventToStage(e); addLayerFiles(e.dataTransfer.files, s); }   // 已有背景 -> 作为角色图层加入
+    });
+    window.addEventListener('paste', function (e) {
+      if (!e.clipboardData) return;
+      var list = [];
+      for (var i = 0; i < e.clipboardData.items.length; i++) { var it = e.clipboardData.items[i]; if (it.type.indexOf('image/') === 0) { var f = it.getAsFile(); if (f) list.push(f); } }
+      if (!list.length) return;
+      if (!currentImg) handleBackgroundFiles(list); else addLayerFiles(list);
+    });
+
+    document.getElementById('btnAddPoint').addEventListener('click', function () {
+      var x = parseFloat(document.getElementById('cpX').value), y = parseFloat(document.getElementById('cpY').value);
+      if (isNaN(x) || isNaN(y)) { alert('请输入有效的 X、Y 坐标'); return; }
+      addCustomPoint(Math.round(x), Math.round(y), document.getElementById('cpLabel').value.trim(), document.getElementById('cpColorPick').value);
+      document.getElementById('cpX').value = ''; document.getElementById('cpY').value = ''; document.getElementById('cpLabel').value = '';
+    });
+    document.getElementById('btnClearPoints').addEventListener('click', function () { customPoints = []; refreshList(); render(); });
+
+    document.getElementById('btnDownload').addEventListener('click', exportPNG);
+    document.getElementById('btnCopy').addEventListener('click', copyPNG);
+    document.getElementById('btnPreset').addEventListener('click', function () { params.rangeX = 240; params.rangeY = 180; params.originX = 0; params.originY = 0; syncInputs(); render(); });
+    document.getElementById('btnResetImg').addEventListener('click', function () { params.brightness = 0; params.exposure = 0; params.contrast = 0; params.saturation = 0; adjustDirty = true; syncInputs(); render(); });
+  </script>
+</body>
+</html>

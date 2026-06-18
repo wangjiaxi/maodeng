@@ -2,412 +2,266 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="../favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>试题与答案全能转换器</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --bg: #f3f4f6;
-            --panel-bg: #ffffff;
-            --border: #e5e7eb;
-            --text: #1f2937;
-            --header-bg: #1e293b;
-        }
+  <link rel="icon" href="../favicon.png">
+  <title>客观题 AI 格式化</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --accent: #6366f1;
+      --accent2: #9333ea;
+      --ok: #16a34a;
+      --err: #dc2626;
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+      --mono: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
 
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+    .topbar {
+      display: flex; align-items: center; gap: 16px; padding: 16px 28px;
+      border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 20;
+    }
+    .back { flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease; }
+    .back:hover { color: var(--text); border-color: var(--accent); }
+    .title-wrap h1 { font-size: 21px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+    .spacer { flex: 1; }
+    .powered {
+      flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600;
+      padding: 8px 14px; border-radius: 999px; color: #fff;
+      background: linear-gradient(120deg, #6366f1, #9333ea); box-shadow: 0 3px 10px rgba(99,102,241,0.3);
+    }
+    .powered .dot { width: 7px; height: 7px; border-radius: 50%; background: #a5f3fc; box-shadow: 0 0 8px #a5f3fc; animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-        header {
-            text-align: center;
-            background: var(--header-bg);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
+    .app { display: flex; gap: 20px; align-items: flex-start; max-width: 1440px; margin: 0 auto; padding: 22px 24px 48px; }
+    .stage { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+    .panel { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
 
-        h1 { margin: 0; font-size: 1.5rem; }
-        .subtitle { font-size: 0.9rem; opacity: 0.8; margin-top: 5px; }
+    .result-row { display: flex; gap: 16px; align-items: stretch; }
+    .result-row > .card { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .result-row > .card .card-body { flex: 1; }
+    .result-row > .card .out { flex: 1; min-height: 220px; }
 
-        /* 通用面板样式 */
-        .section {
-            background: var(--panel-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-        }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+    .card-head { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; }
+    .card-head .count { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 
-        .section-header {
-            padding: 12px 20px;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--border);
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #334155;
-        }
+    details.card > summary { padding: 13px 16px; font-size: 14.5px; font-weight: 600; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; user-select: none; }
+    details.card > summary::-webkit-details-marker { display: none; }
+    details.card > summary::before { content: ""; width: 6px; height: 6px; border-right: 2px solid var(--faint); border-bottom: 2px solid var(--faint); transform: rotate(-45deg); transition: transform 0.2s ease; }
+    details.card[open] > summary::before { transform: rotate(45deg); }
+    details.card .card-body { padding-top: 4px; }
 
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            padding: 10px 20px;
-            background: #fff;
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-        }
+    textarea {
+      width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; resize: vertical;
+      font-family: var(--mono); font-size: 13px; line-height: 1.65; color: #1e293b; background: #fff; outline: none;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea[readonly] { background: #f9fafb; }
+    #input { min-height: 200px; }
+    .out { min-height: 150px; }
 
-        button {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 5px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        button:hover { transform: translateY(-1px); opacity: 0.9; }
-        .btn-go { background: var(--primary); color: white; }
-        .btn-copy { background: var(--success); color: white; }
-        .btn-demo { background: #64748b; color: white; }
-        .btn-clear { background: var(--danger); color: white; }
+    .btn { font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.18s ease; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border: none; color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .btn.primary:hover { color: #fff; filter: brightness(1.06); }
+    .btn.primary:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+    .btn.full { width: 100%; justify-content: center; padding: 12px; font-size: 14.5px; font-weight: 600; }
+    .btn.sm { padding: 6px 11px; font-size: 12.5px; }
+    .row-btns { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
 
-        .workspace {
-            display: flex;
-            gap: 20px;
-            padding: 20px;
-            flex: 1;
-            min-height: 200px;
-        }
+    .gen-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .status { font-size: 13px; color: var(--muted); display: none; align-items: center; gap: 8px; min-height: 20px; }
+    .status.show { display: flex; }
+    .status.err { color: var(--err); }
+    .status.ok { color: var(--ok); }
+    .spinner { width: 14px; height: 14px; border: 2px solid #e2e5ec; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            overflow: hidden;
-        }
+    details.think { border: 1px dashed var(--border); border-radius: 10px; background: #fbfbfd; display: none; }
+    details.think.show { display: block; }
+    details.think > summary { padding: 9px 13px; font-size: 12.5px; color: var(--muted); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    details.think > summary::-webkit-details-marker { display: none; }
+    details.think pre { margin: 0; padding: 0 13px 12px; max-height: 220px; overflow-y: auto; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: #64748b; white-space: pre-wrap; word-break: break-word; }
 
-        .panel-label {
-            padding: 8px 12px;
-            background: #f1f5f9;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: #64748b;
-            border-bottom: 1px solid var(--border);
-        }
+    .note { font-size: 12px; color: var(--faint); line-height: 1.6; }
+    .note.gen { color: var(--accent); }
 
-        textarea {
-            flex: 1;
-            border: none;
-            padding: 15px;
-            resize: none;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            outline: none;
-            color: #334155;
-            background: #fff;
-        }
-        
-        textarea[readonly] { background: #f8fafc; color: #1e293b; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field > label { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+    .field input { font-family: inherit; font-size: 13px; color: var(--text); padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; outline: none; width: 100%; }
+    .field input:focus { border-color: var(--accent); }
+    .field .hint { font-size: 11.5px; color: var(--faint); }
 
-        .badge {
-            background: #e2e8f0;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            color: #475569;
-        }
+    .info-card .card-body { gap: 8px; }
+    .info-card p { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+    .info-card code { font-family: var(--mono); font-size: 11.5px; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: #475569; }
 
-        .score-info {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-left: auto;
-        }
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(22,24,29,0.92); color: #fff; padding: 10px 20px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 50; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        @media (max-width: 768px) {
-            .workspace { flex-direction: column; }
-            textarea { min-height: 200px; }
-        }
-    </style>
+    /* ---------- 线上预览（仿核桃 OJ md-editor github-theme） ---------- */
+    .preview-card { animation: pvIn 0.25s ease; }
+    @keyframes pvIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .preview-body { padding: 24px 28px 30px; background: #fff; }
+    .pv-h3 { font-size: 17px; font-weight: 700; color: #1f2328; margin: 0 0 12px; }
+    .pv-q { padding: 2px 0; }
+    .pv-text { font-size: 15px; line-height: 1.75; color: #1f2328; word-break: break-word; }
+    .pv-text + .pv-text { margin-top: 4px; }
+    .pv-num { font-weight: 700; margin-right: 5px; }
+    .pv-code { background: #f6f8fa; border: 1px solid #eaecef; border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 11px 0; }
+    .pv-code code { font-family: var(--mono); font-size: 13px; line-height: 1.65; color: #1f2328; white-space: pre; display: block; }
+    .pv-text code, .pv-opt code { background: rgba(175,184,193,0.22); padding: 0.14em 0.4em; border-radius: 6px; font-family: var(--mono); font-size: 0.9em; color: #24292f; }
+    .pv-options { list-style: none; margin: 11px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+    .pv-opt { display: flex; align-items: center; padding: 8px 12px; border-radius: 12px; color: #3f3f46; font-size: 15px; line-height: 1.6; transition: background 0.15s ease; }
+    .pv-opt:not(.correct):hover { background: #f5f5f5; }
+    .pv-opt.correct { background: #f0fdf6; }
+    .pv-radio { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #c8ccd4; background: #fff; flex-shrink: 0; margin-right: 12px; box-sizing: border-box; }
+    .pv-radio.correct { border: none; background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cg clip-path='url(%23a)'%3E%3Cpath fill='%2300da8e' d='M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0'/%3E%3Cpath fill='%23fff' d='m18.313 9.158-7.341 7.341a1.17 1.17 0 0 1-1.658 0l-3.627-3.627a1.172 1.172 0 0 1 1.657-1.657l2.799 2.799L16.656 7.5a1.172 1.172 0 0 1 1.657 1.657'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Cpath fill='%23fff' d='M0 0h24v24H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E") center/cover no-repeat; }
+    .pv-opt-body { flex: 1; min-width: 0; }
+    .pv-opt.correct .pv-opt-body { color: #00a173; font-weight: 500; }
+    .pv-badge { margin-left: 10px; flex-shrink: 0; font-size: 11.5px; color: #00a173; background: #dcfce7; padding: 2px 9px; border-radius: 999px; font-weight: 600; }
+    .pv-img { max-width: 100%; max-height: 150px; vertical-align: middle; border: 1px solid #eaecef; border-radius: 6px; margin: 2px 0; }
+    .pv-hr { border: none; border-top: 1px solid #e5e7eb; margin: 18px 0; }
+    .pv-toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500; color: var(--muted); cursor: pointer; user-select: none; }
+    .pv-toggle input { display: none; }
+    .pv-switch { position: relative; width: 36px; height: 20px; border-radius: 999px; background: #d1d5db; transition: background 0.2s ease; flex-shrink: 0; }
+    .pv-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s ease; }
+    .pv-toggle input:checked + .pv-switch { background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .pv-toggle input:checked + .pv-switch::after { transform: translateX(16px); }
+
+    @media (max-width: 960px) { .app { flex-direction: column; } .panel { width: 100%; } }
+    @media (max-width: 640px) { .preview-body { padding: 16px; } }
+  </style>
 </head>
 <body>
-
-<header>
-    <h1>试题与答案全能转换器</h1>
-    <div class="subtitle">高精度代码识别 | 答案自动算分 (总分100) | Markdown格式化</div>
-</header>
-
-<!-- 第一部分：题目转换 -->
-<div class="section">
-    <div class="section-header">
-        <span>📝 题目内容转换</span>
-        <span class="badge" id="qCountBadge">0 题</span>
+  <header class="topbar">
+    <a class="back" href="https://maodeng.xkloj.online">← 猫凳系统</a>
+    <div class="title-wrap">
+      <h1>客观题 AI 格式化</h1>
+      <p>粘贴客观题，AI 自动整理成 OJ 格式并生成答案</p>
     </div>
-    <div class="toolbar">
-        <button class="btn-go" onclick="convertQuestions()">🚀 转换题目</button>
-        <button class="btn-copy" onclick="copyContent('qOutput')">📋 复制题目</button>
-        <button class="btn-demo" onclick="loadDemoQuestions()">📝 题目示例</button>
-        <button class="btn-clear" onclick="clearField('qInput', 'qOutput', 'qCountBadge')">🗑️ 清空</button>
-    </div>
-    <div class="workspace">
-        <div class="panel">
-            <div class="panel-label">原始题目文本</div>
-            <textarea id="qInput" placeholder="在此粘贴题目...&#10;1. 已知 x = 'book'...&#10;A. ...&#10;B. ..."></textarea>
+    <span class="spacer"></span>
+    <span class="powered"><span class="dot"></span>DeepSeek V4 Flash 驱动</span>
+  </header>
+
+  <div class="app">
+    <section class="stage">
+      <!-- 输入 + 生成 -->
+      <div class="card">
+        <div class="card-head">原始题目<span class="count" id="charCount">0 字</span></div>
+        <div class="card-body">
+          <textarea id="input" placeholder="在此粘贴客观题（可含代码），无需手动加答案。例如：&#10;1. 已知 x = 'book'，x[0] 的值是？&#10;A. b&#10;B. o&#10;C. k&#10;D. 报错"></textarea>
+          <div class="row-btns">
+            <button class="btn sm" id="btnDemo">载入示例</button>
+            <button class="btn sm" id="btnClear">清空</button>
+          </div>
+          <div class="gen-wrap">
+            <button class="btn primary full" id="btnGen">AI 格式化并生成答案</button>
+            <div class="status" id="status"></div>
+            <details class="think" id="thinkWrap">
+              <summary>AI 思考过程</summary>
+              <pre id="reasoning"></pre>
+            </details>
+          </div>
         </div>
-        <div class="panel">
-            <div class="panel-label">Markdown 格式题目</div>
-            <textarea id="qOutput" readonly placeholder="转换结果将显示在这里..."></textarea>
+      </div>
+
+      <!-- 格式化题目 + 答案（并列） -->
+      <div class="result-row">
+        <div class="card">
+          <div class="card-head">格式化题目（Markdown）<span class="count" id="qCount"></span></div>
+          <div class="card-body">
+            <textarea class="out" id="qOut" readonly placeholder="AI 整理后的题目将显示在这里…"></textarea>
+            <div class="row-btns"><button class="btn sm" id="btnCopyQ">复制题目</button><button class="btn sm" id="btnPreview">预览线上效果</button></div>
+          </div>
         </div>
-    </div>
-</div>
 
-<!-- 第二部分：答案转换 -->
-<div class="section">
-    <div class="section-header">
-        <span>✅ 答案格式转换 (总分100)</span>
-        <span class="score-info" id="scoreInfo">等待计算</span>
-    </div>
-    <div class="toolbar">
-        <button class="btn-go" onclick="convertAnswers()">🧮 生成答案格式</button>
-        <button class="btn-copy" onclick="copyContent('aOutput')">📋 复制答案</button>
-        <button class="btn-demo" onclick="loadDemoAnswers()">📝 答案示例</button>
-        <button class="btn-clear" onclick="clearField('aInput', 'aOutput', 'scoreInfo')">🗑️ 清空</button>
-    </div>
-    <div class="workspace">
-        <div class="panel">
-            <div class="panel-label">原始答案 (如: BDACC 或 B,D,A,C,C)</div>
-            <textarea id="aInput" placeholder="在此粘贴答案序列...&#10;系统会自动关联上方检测到的题目数量"></textarea>
+        <div class="card">
+          <div class="card-head">答案（type: objective）<span class="count" id="scoreInfo"></span></div>
+          <div class="card-body">
+            <textarea class="out" id="aOut" readonly placeholder="type: objective&#10;answers:&#10;  '1': ['B', 5]&#10;  …"></textarea>
+            <div class="row-btns"><button class="btn sm" id="btnCopyA">复制答案</button></div>
+            <p class="note gen">题目格式与答案均由 DeepSeek V4 Flash 自动生成，请人工复核后使用。</p>
+          </div>
         </div>
-        <div class="panel">
-            <div class="panel-label">Markdown/YAML 格式答案</div>
-            <textarea id="aOutput" readonly placeholder="type: objective&#10;answers:&#10;  '1': ['B', 5]&#10;  ..."></textarea>
+      </div>
+
+      <!-- 线上预览效果 -->
+      <div class="card preview-card" id="previewCard" style="display:none;">
+        <div class="card-head">线上预览效果<label class="pv-toggle" title="开启后用绿色对勾标出正确答案；关闭则为学生线上视角"><input type="checkbox" id="pvShowAns" checked><span class="pv-switch"></span>标注答案</label><button class="btn sm" id="btnClosePreview">关闭</button></div>
+        <div class="preview-body" id="previewBody"></div>
+      </div>
+    </section>
+
+    <!-- 设置面板 -->
+    <aside class="panel">
+      <details class="card" open>
+        <summary>设置</summary>
+        <div class="card-body">
+          <div class="field">
+            <label>总分</label>
+            <input type="number" id="totalScore" min="1" step="1" value="100">
+            <span class="hint">按题数平均分配，余数分给前几题</span>
+          </div>
         </div>
-    </div>
-</div>
+      </details>
 
-<script>
-    // --- 全局状态 ---
-    let detectedQuestionCount = 0;
+      <div class="card info-card">
+        <div class="card-head">说明</div>
+        <div class="card-body">
+          <p>AI 会把每道题整理成：题干（代码用 <code>`反引号`</code> 或 <code>```Python```</code> 代码块）+ <code>{{ select(n) }}</code> + 选项，并自动推断正确答案。</p>
+          <p>答案按总分平均分配（余数分给前几题），输出为 <code>type: objective</code> 的 YAML，可直接用于核桃 OJ。</p>
+          <p>题量较大时建议分批，避免单次输出被截断。</p>
+        </div>
+      </div>
+    </aside>
+  </div>
 
-    // --- 工具函数 ---
-    function copyContent(elementId) {
-        const el = document.getElementById(elementId);
-        if (!el.value) return alert('无内容可复制');
-        el.select();
-        document.execCommand('copy');
-        if (navigator.clipboard) navigator.clipboard.writeText(el.value);
-        alert('已复制到剪贴板！');
-    }
+  <!-- 系统提示词（text/plain 避免转义问题） -->
+  <script type="text/plain" id="sysPrompt">
+你是客观选择题的「格式化 + 解答」助手。用户会给出一批客观题（可能包含 Python 代码）。请完成两件事：
+1）把每道题整理成下面规定的 Markdown 格式；
+2）依据题意推理出每道题的正确答案。
 
-    function clearField(inputId, outputId, badgeId) {
-        document.getElementById(inputId).value = '';
-        document.getElementById(outputId).value = '';
-        const badge = document.getElementById(badgeId);
-        if (badgeId === 'qCountBadge') {
-            badge.textContent = '0 题';
-            detectedQuestionCount = 0;
-        } else if (badgeId === 'scoreInfo') {
-            badge.textContent = '等待计算';
-        } else {
-            badge.textContent = '';
-        }
-    }
+【输出要求】只输出一个 JSON 对象，不要输出任何解释文字，也不要用 ``` 把 JSON 包起来。结构如下：
+{"questions":[{"number":1,"markdown":"...","answer":"B"}]}
 
-    // --- 核心逻辑：高精度代码识别 (复用之前的优化逻辑) ---
+【markdown 字段格式】
+- 第一行写："N. 题干"。题干中出现的变量名、表达式、字符串、函数、代码片段，用反引号 ` 包裹，例如 `x = 'book'`、`len(s)`、`'s'`。
+- 如果题目带有多行代码段，用代码块表示：单独一行 ```Python ，逐行写代码，最后单独一行 ``` 。代码块放在题干之后、{{ select }} 之前。
+- 之后单独一行写：{{ select(N) }}
+- 然后每个选项各写成一行："- A. 选项内容"。若选项内容是纯代码 / 表达式 / 值，用反引号包裹，例如 "- A. `x[4]`"。
+- N 是题号，从 1 开始，按用户输入的题目顺序依次编号（忽略原文里写的题号）。
 
-    function isPureCode(text) {
-        if (!text || text.trim().length === 0) return false;
-        const trimmed = text.trim();
-        if (/[\u4e00-\u9fa5]{2,}/.test(trimmed)) return false;
-        if (/(是 | 为|的|否|真|假|结果|等于|大于|小于|属于|返回|正确|错误|应|想|要)/.test(trimmed)) return false;
-        
-        const codeCharsPattern = /^[A-Za-z0-9_\s\.\,\(\)\[\]\{\}\'\"\+\-\*\/\<\>\=\!\&\|\%\^\~\?]+$/;
-        if (!codeCharsPattern.test(trimmed)) return false;
+【answer 字段】填该题正确选项的大写字母，如 "A"、"B"。若确有多个正确选项，按字母顺序拼接，如 "AC"。
 
-        const hasOperator = /[\+\-\*\/\%\<\>\=\!\&\|\^\~]/.test(trimmed);
-        const hasQuote = /['"]/.test(trimmed);
-        const hasParen = /[\(\)]/.test(trimmed);
-        const keywords = ['True', 'False', 'None', 'in', 'not', 'and', 'or', 'if', 'else', 'pass', 'break', 'continue', 'lambda'];
-        const words = trimmed.split(/\s+/).filter(w => w.length > 0);
-        const allKeywordsOrShortVars = words.every(w => keywords.includes(w) || /^[A-Za-z_][A-Za-z0-9_]{0,15}$/.test(w));
+【示例】
+输入：
+1. 表达式 1 + 1 的值是？
+A. 1
+B. 2
+C. 3
+D. 4
+输出：
+{"questions":[{"number":1,"markdown":"1. 表达式 `1 + 1` 的值是？\n{{ select(1) }}\n- A. `1`\n- B. `2`\n- C. `3`\n- D. `4`","answer":"B"}]}
+  </script>
 
-        return hasOperator || hasQuote || hasParen || allKeywordsOrShortVars;
-    }
-
-    function highlightInlineCode(text) {
-        if (!text) return text;
-        let result = "";
-        let i = 0;
-        const len = text.length;
-
-        while (i < len) {
-            let matchFound = false;
-            const char = text[i];
-
-            // 1. 匹配字符串
-            if (char === "'" || char === '"') {
-                const quote = char;
-                let j = i + 1;
-                while (j < len) {
-                    if (text[j] === '\\' && j + 1 < len) { j += 2; continue; }
-                    if (text[j] === quote) {
-                        result += `\`${text.substring(i, j + 1)}\``;
-                        i = j + 1;
-                        matchFound = true;
-                        break;
-                    }
-                    j++;
-                }
-                if (matchFound) continue;
-            }
-
-            // 2. 匹配赋值/运算
-            if (/[A-Za-z_0-9]/.test(char)) {
-                if (/[A-Za-z_]/.test(char) || /\d/.test(char)) {
-                    let k = i;
-                    let segmentEnd = -1;
-                    while (k < len) {
-                        const c = text[k];
-                        const isCodeChar = /[A-Za-z0-9_\.\[\]\(\)'"\s\+\-\*\/%<>=!&|^~]/.test(c);
-                        const isChinese = /[\u4e00-\u9fa5]/.test(c);
-                        const isPunctuation = /[,.:;!?,.]/.test(c);
-                        if (isChinese || isPunctuation) { segmentEnd = k; break; }
-                        if (!isCodeChar) { segmentEnd = k; break; }
-                        k++;
-                    }
-                    
-                    const candidate = text.substring(i, segmentEnd === -1 ? k : segmentEnd);
-                    const keywords = ['True', 'False', 'None', 'in', 'not', 'and', 'or', 'if', 'else', 'elif', 'for', 'while', 'def', 'return', 'import', 'from', 'as', 'class', 'try', 'except', 'finally', 'with', 'lambda', 'yield', 'pass', 'break', 'continue', 'assert', 'del', 'global', 'nonlocal', 'raise', 'print', 'len', 'range', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple'];
-                    
-                    const isJustWord = /^[A-Za-z_]+$/.test(candidate);
-                    const isKeyword = keywords.includes(candidate);
-                    const isAssignmentOrOp = /[+\-\*\/%<>=!&|^~(\[]/.test(candidate);
-
-                    if ((isAssignmentOrOp || isKeyword) && !(isJustWord && !isKeyword)) {
-                        let finalSegment = candidate.replace(/\s+$/, '');
-                        if (finalSegment.length > 0) {
-                            result += `\`${finalSegment}\``;
-                            i += finalSegment.length;
-                            if (candidate.length > finalSegment.length) i += (candidate.length - finalSegment.length);
-                            matchFound = true;
-                            continue;
-                        }
-                    }
-                }
-            }
-
-            // 3. 匹配独立关键字
-            if (/[A-Za-z_]/.test(char)) {
-                const keywords = ['True', 'False', 'None', 'in', 'not', 'and', 'or', 'if', 'else', 'elif', 'for', 'while', 'def', 'return', 'import', 'from', 'as', 'class', 'try', 'except', 'finally', 'with', 'lambda', 'yield', 'pass', 'break', 'continue', 'assert', 'del', 'global', 'nonlocal', 'raise', 'print', 'len', 'range', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple'];
-                for (let kw of keywords) {
-                    if (text.substr(i, kw.length) === kw) {
-                        const nextChar = text[i + kw.length];
-                        if (!nextChar || !/[A-Za-z0-9_]/.test(nextChar)) {
-                            const prevChar = i > 0 ? text[i-1] : '';
-                            if (!/[A-Za-z0-9_]/.test(prevChar)) {
-                                result += `\`${kw}\``;
-                                i += kw.length;
-                                matchFound = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (matchFound) continue;
-            }
-
-            result += char;
-            i++;
-        }
-        return result;
-    }
-
-    function parseSingleQuestion(text, defaultNum) {
-        const lines = text.split('\n');
-        if (lines.length === 0) return null;
-        const firstLine = lines[0];
-        const numMatch = firstLine.match(/^(\d+)\./);
-        const qNum = numMatch ? numMatch[1] : defaultNum;
-
-        let optionStartIndex = -1;
-        for (let i = 0; i < lines.length; i++) {
-            const trimmed = lines[i].trim();
-            if (/^[A-Z][\.、:]\s/.test(trimmed) || /^[A-Z][\.、:]$/.test(trimmed)) {
-                optionStartIndex = i;
-                break;
-            }
-        }
-
-        let titleLineRaw = firstLine.replace(/^\d+\.\s*/, '').trim();
-        let codeLines = [];
-        let optionLines = [];
-
-        if (optionStartIndex !== -1) {
-            for (let i = 1; i < optionStartIndex; i++) {
-                if (lines[i].trim() === '' && codeLines.length === 0) continue;
-                codeLines.push(lines[i]);
-            }
-            for (let i = optionStartIndex; i < lines.length; i++) {
-                if (lines[i].trim() !== '') optionLines.push(lines[i]);
-            }
-        } else {
-            let contentLines = [];
-            for(let i=1; i<lines.length; i++) if(lines[i].trim() !== '') contentLines.push(lines[i]);
-            let res = `${qNum}. ${highlightInlineCode(titleLineRaw)}`;
-            contentLines.forEach(l => res += '\n' + highlightInlineCode(l));
-            res += `\n{{ select(${qNum}) }}`;
-            return res;
-        }
-
-        let output = [];
-        output.push(`${qNum}. ${highlightInlineCode(titleLineRaw)}`);
-        if (codeLines.length > 0) {
-            output.push('```Python');
-            codeLines.forEach(line => output.push(line));
-            output.push('```');
-        }
-        output.push(`{{ select(${qNum}) }}`);
-
-        optionLines.forEach(opt => {
-            const trimmed = opt.trim();
-            const m = trimmed.match(/^([A-Z])[\.、:]\s*(.*)/);
-            if (m) {
-                const label = m[1];
-                const content = m[2];
-                let formattedContent = isPureCode(content) ? `\`${content}\`` : highlightInlineCode(content);
-                output.push(`- ${label}. ${formattedContent}`);
-            } else {
-                output.push(`- ${highlightInlineCode(trimmed)}`);
-            }
-        });
-        return output.join('\n');
-    }
-
-    // --- 业务逻辑：题目转换 ---
-
-    function loadDemoQuestions() {
-        const demo = `1. 已知变量 x = 'bookshelf'，想要打印出字符 's'，横线处应填写的代码是哪个选项？
+  <script type="text/plain" id="demoText">
+1. 已知变量 x = 'bookshelf'，想要打印出字符 's'，应使用哪个选项？
 A. x[4]
 B. x[5]
 C. x['s']
@@ -419,13 +273,7 @@ B. 1020
 C. Error
 D. None
 
-3. 判断列表 lst 是否为空，应使用？
-A. if lst == []
-B. if not lst
-C. if len(lst) = 0
-D. 以上都是
-
-4. 执行 print('hello') 后输出？
+3. 执行下面代码，输出是什么？
 x = 1
 if x > 0:
     print("Positive")
@@ -434,127 +282,230 @@ B. hello
 C. 1
 D. Error
 
-5. 表达式 10 != 10 的结果是？
+4. 表达式 10 != 10 的结果是？
 A. True
 B. False
 C. None
-D. Error`;
-        document.getElementById('qInput').value = demo;
-        updateQCount();
+D. Error
+  </script>
+
+  <script>
+    var BASE = 'https://api.deepseek.com/chat/completions';
+    var KEY = 'sk-8ff832ba06554e0ea1f37550a4c72dc9';
+    var MODEL = 'deepseek-v4-flash';
+    var TEMP = 0.2;
+    var SYS = document.getElementById('sysPrompt').textContent.trim();
+
+    var $ = function (id) { return document.getElementById(id); };
+    var input = $('input'), qOut = $('qOut'), aOut = $('aOut');
+    var statusEl = $('status'), thinkWrap = $('thinkWrap'), reasoningEl = $('reasoning');
+    var btnGen = $('btnGen'), totalInput = $('totalScore');
+    var running = false, lastData = null;
+
+    /* ---------- 总分持久化 ---------- */
+    totalInput.value = localStorage.getItem('ds-total') || '100';
+    totalInput.addEventListener('change', function () { localStorage.setItem('ds-total', totalInput.value); if (lastData) renderOutputs(lastData); });
+
+    /* ---------- 状态显示 ---------- */
+    function setStatus(msg, kind, spin) {
+      statusEl.className = 'status show' + (kind ? ' ' + kind : '');
+      statusEl.innerHTML = (spin ? '<span class="spinner"></span>' : '') + '<span>' + msg + '</span>';
+    }
+    function hideStatus() { statusEl.className = 'status'; }
+
+    /* ---------- 输出渲染 ---------- */
+    function buildAnswerYaml(questions, total) {
+      var n = questions.length; if (!n) return '';
+      var base = Math.floor(total / n), rem = total - base * n;
+      var lines = ['type: objective # 表明该题为客观题', 'answers: # 列举出每一题的正确选项与对应的得分，总分需为 ' + total + ' 分'];
+      questions.forEach(function (q, i) {
+        var score = base + (i < rem ? 1 : 0);
+        var num = q.number || (i + 1);
+        var ans = String(q.answer || '').toUpperCase().replace(/[^A-Z]/g, '') || 'A';
+        lines.push("  '" + num + "': ['" + ans + "', " + score + ']');
+      });
+      return lines.join('\n');
+    }
+    function renderOutputs(data) {
+      lastData = data;
+      var qs = data.questions || [];
+      qOut.value = qs.map(function (q) { return (q.markdown || '').trim(); }).join('\n\n---\n\n');
+      var total = parseInt(totalInput.value, 10) || 100;
+      aOut.value = buildAnswerYaml(qs, total);
+      $('qCount').textContent = qs.length + ' 题';
+      $('scoreInfo').textContent = qs.length + ' 题 · 总分 ' + total;
     }
 
-    function updateQCount() {
-        const val = document.getElementById('qInput').value;
-        const count = (val.match(/^\d+\./gm) || []).length;
-        detectedQuestionCount = count;
-        document.getElementById('qCountBadge').textContent = `${count} 题`;
-        document.getElementById('scoreInfo').textContent = `检测到 ${count} 题，准备算分`;
+    function stripFences(s) {
+      var t = s.trim();
+      t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      return t.trim();
     }
 
-    document.getElementById('qInput').addEventListener('input', updateQCount);
+    /* ---------- 调用 AI（流式） ---------- */
+    async function generate() {
+      if (running) return;
+      var raw = input.value.trim();
+      if (!raw) { alert('请先粘贴题目内容'); return; }
 
-    function convertQuestions() {
-        const raw = document.getElementById('qInput').value;
-        if (!raw.trim()) return alert('请输入题目内容');
+      running = true; btnGen.disabled = true;
+      var reasoning = '', content = '', finish = null, contentStarted = false;
+      reasoningEl.textContent = ''; thinkWrap.className = 'think show'; thinkWrap.open = true;
+      qOut.value = ''; aOut.value = ''; $('qCount').textContent = ''; $('scoreInfo').textContent = ''; $('previewCard').style.display = 'none';
+      var t0 = Date.now();
+      var phase = 'DeepSeek 正在思考…';
+      var timer = setInterval(function () { setStatus(phase + '（' + ((Date.now() - t0) / 1000).toFixed(1) + 's）', '', true); }, 150);
 
-        const lines = raw.split('\n');
-        const questions = [];
-        let currentQ = [];
-
-        lines.forEach(line => {
-            if (/^\d+\./.test(line.trim())) {
-                if (currentQ.length > 0) questions.push(currentQ.join('\n'));
-                currentQ = [line];
-            } else {
-                currentQ.push(line);
-            }
+      try {
+        var resp = await fetch(BASE, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: [{ role: 'system', content: SYS }, { role: 'user', content: raw }],
+            response_format: { type: 'json_object' },
+            temperature: TEMP,
+            max_tokens: 8192,
+            stream: true
+          })
         });
-        if (currentQ.length > 0) questions.push(currentQ.join('\n'));
-
-        const results = [];
-        questions.forEach((qText, index) => {
-            const md = parseSingleQuestion(qText, index + 1);
-            if (md) results.push(md);
-        });
-
-        const finalOutput = results.join('\n\n---\n\n');
-        document.getElementById('qOutput').value = finalOutput;
-        document.getElementById('qCountBadge').textContent = `成功 ${results.length} 题`;
-        
-        // 同步更新答案区的提示
-        detectedQuestionCount = results.length;
-        document.getElementById('scoreInfo').textContent = `检测到 ${results.length} 题，请在下方输入答案`;
-    }
-
-    // --- 业务逻辑：答案转换 ---
-
-    function loadDemoAnswers() {
-        // 假设对应上面的5道题
-        document.getElementById('aInput').value = "B A B A B";
-        document.getElementById('scoreInfo').textContent = "示例：5题，每题20分";
-    }
-
-    function convertAnswers() {
-        const rawAns = document.getElementById('aInput').value.trim();
-        if (!rawAns) return alert('请输入答案序列');
-
-        // 1. 解析答案字符串
-        // 移除所有空白、逗号、顿号等分隔符，只保留字母
-        const cleanAns = rawAns.replace(/[^A-Za-z]/g, '').toUpperCase();
-        
-        if (cleanAns.length === 0) return alert('未识别到有效答案字母');
-
-        // 2. 确定题目总数
-        let totalQuestions = detectedQuestionCount;
-        if (totalQuestions === 0) {
-            // 如果没检测到题目，尝试让用户确认或使用答案长度
-            const useLen = confirm(`未检测到题目数量（或题目未转换）。是否使用答案个数 (${cleanAns.length}) 作为题目总数？\n点击“取消”将默认为 20 题。`);
-            if (useLen) {
-                totalQuestions = cleanAns.length;
-            } else {
-                totalQuestions = 20;
-            }
+        if (!resp.ok) {
+          var errText = await resp.text();
+          var em = errText;
+          try { em = JSON.parse(errText).error.message; } catch (e) {}
+          throw new Error('请求失败 (HTTP ' + resp.status + ')：' + em);
         }
 
-        // 3. 截取或填充答案以匹配题目数
-        let answersArray = cleanAns.split('');
-        if (answersArray.length > totalQuestions) {
-            if(!confirm(`答案数量 (${answersArray.length}) 多于题目数量 (${totalQuestions})。是否截断多余答案？\n点击“取消”将停止转换。`)) return;
-            answersArray = answersArray.slice(0, totalQuestions);
-        } else if (answersArray.length < totalQuestions) {
-            if(!confirm(`答案数量 (${answersArray.length}) 少于题目数量 (${totalQuestions})。是否用 'A' 填充剩余题目？\n点击“取消”将停止转换。`)) return;
-            while (answersArray.length < totalQuestions) {
-                answersArray.push('A');
-            }
+        var reader = resp.body.getReader(), dec = new TextDecoder(), buf = '';
+        while (true) {
+          var r = await reader.read();
+          if (r.done) break;
+          buf += dec.decode(r.value, { stream: true });
+          var idx;
+          while ((idx = buf.indexOf('\n')) >= 0) {
+            var line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+            if (line.indexOf('data:') !== 0) continue;
+            var payload = line.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            var j; try { j = JSON.parse(payload); } catch (e) { continue; }
+            var ch = j.choices && j.choices[0]; if (!ch) continue;
+            var d = ch.delta || {};
+            if (d.reasoning_content) { reasoning += d.reasoning_content; reasoningEl.textContent = reasoning; reasoningEl.scrollTop = reasoningEl.scrollHeight; }
+            if (d.content) { content += d.content; if (!contentStarted) { contentStarted = true; phase = '正在生成结果…'; } }
+            if (ch.finish_reason) finish = ch.finish_reason;
+          }
         }
 
-        // 4. 计算分值 (总分100)
-        const totalScore = 100;
-        const baseScore = Math.floor(totalScore / totalQuestions);
-        let remainder = totalScore % totalQuestions;
-        
-        let outputLines = [];
-        outputLines.push("type: objective # 表明该题为客观题");
-        outputLines.push("answers: # 列举出每一题的正确选项与对应的得分，总分需为100分");
-
-        for (let i = 0; i < totalQuestions; i++) {
-            const qNum = i + 1;
-            const ansChar = answersArray[i];
-            // 前 remainder 道题，每题多 1 分
-            const score = baseScore + (i < remainder ? 1 : 0);
-            
-            outputLines.push(`  '${qNum}': ['${ansChar}', ${score}]`);
+        clearInterval(timer);
+        var data;
+        try { data = JSON.parse(stripFences(content)); }
+        catch (e) {
+          qOut.value = content;
+          throw new Error('结果解析失败：模型未返回有效 JSON（已把原始输出放入题目框，可重试）');
         }
+        if (!data.questions || !data.questions.length) throw new Error('未解析到任何题目，请检查输入');
 
-        const finalOutput = outputLines.join('\n');
-        document.getElementById('aOutput').value = finalOutput;
-        document.getElementById('scoreInfo').textContent = `已生成：${totalQuestions}题，总分100`;
+        renderOutputs(data);
+        thinkWrap.open = false;
+        var secs = ((Date.now() - t0) / 1000).toFixed(1);
+        if (finish === 'length') setStatus('输出可能被截断（题量较大），建议分批处理。已生成 ' + data.questions.length + ' 题', 'err');
+        else setStatus('完成：共 ' + data.questions.length + ' 题，用时 ' + secs + 's', 'ok');
+      } catch (err) {
+        clearInterval(timer);
+        setStatus(err.message || String(err), 'err');
+      } finally {
+        running = false; btnGen.disabled = false;
+      }
     }
 
-    // 初始化计数
-    updateQCount();
+    /* ---------- 复制 ---------- */
+    function copy(el, name) {
+      if (!el.value) { alert('暂无内容可复制'); return; }
+      if (navigator.clipboard) navigator.clipboard.writeText(el.value).then(function () { toast(name + '已复制'); }, function () { fallbackCopy(el, name); });
+      else fallbackCopy(el, name);
+    }
+    function fallbackCopy(el, name) { el.removeAttribute('readonly'); el.select(); try { document.execCommand('copy'); toast(name + '已复制'); } catch (e) { alert('复制失败'); } el.setAttribute('readonly', ''); }
+    function toast(msg) {
+      var t = $('toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+      t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 1600);
+    }
 
-</script>
+    /* ---------- 事件 ---------- */
+    input.addEventListener('input', function () { $('charCount').textContent = input.value.length + ' 字'; });
+    btnGen.addEventListener('click', generate);
+    $('btnDemo').addEventListener('click', function () { input.value = document.getElementById('demoText').textContent.trim(); $('charCount').textContent = input.value.length + ' 字'; });
+    $('btnClear').addEventListener('click', function () { input.value = ''; qOut.value = ''; aOut.value = ''; $('charCount').textContent = '0 字'; $('qCount').textContent = ''; $('scoreInfo').textContent = ''; hideStatus(); thinkWrap.className = 'think'; $('previewCard').style.display = 'none'; });
+    $('btnCopyQ').addEventListener('click', function () { copy(qOut, '题目'); });
+    $('btnCopyA').addEventListener('click', function () { copy(aOut, '答案'); });
 
+    /* ---------- 线上预览（渲染成核桃 OJ 线上效果） ---------- */
+    function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function inlineMd(s) {
+      var imgs = [];
+      s = String(s).replace(/!\[[^\]]*\]\(([^)]+)\)/g, function (_, u) { imgs.push(u); return '@@IMG' + (imgs.length - 1) + '@@'; });
+      s = escapeHtml(s);
+      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+      s = s.replace(/@@IMG(\d+)@@/g, function (_, n) { return '<img class="pv-img" src="' + imgs[+n].replace(/"/g, '&quot;') + '">'; });
+      return s;
+    }
+    function renderStem(lines) {
+      var out = '', inCode = false, buf = [], firstText = true;
+      for (var i = 0; i < lines.length; i++) {
+        var ln = lines[i];
+        if (/^```/.test(ln)) {
+          if (!inCode) { inCode = true; buf = []; }
+          else { inCode = false; out += '<pre class="pv-code"><code>' + escapeHtml(buf.join('\n')) + '</code></pre>'; }
+          continue;
+        }
+        if (inCode) { buf.push(ln); continue; }
+        if (!ln.trim()) continue;
+        var html = inlineMd(ln);
+        if (firstText) { html = html.replace(/^(\d+)[\.\、]\s*/, '<span class="pv-num">$1.</span> '); firstText = false; }
+        out += '<div class="pv-text">' + html + '</div>';
+      }
+      if (inCode && buf.length) out += '<pre class="pv-code"><code>' + escapeHtml(buf.join('\n')) + '</code></pre>';
+      return out;
+    }
+    function renderQuestion(q, showAns) {
+      var lines = (q.markdown || '').replace(/\r/g, '').split('\n');
+      var selIdx = -1;
+      for (var i = 0; i < lines.length; i++) { if (/\{\{\s*select\s*\(\s*\d+\s*\)\s*\}\}/.test(lines[i])) { selIdx = i; break; } }
+      var stemLines = selIdx >= 0 ? lines.slice(0, selIdx) : lines;
+      var optLines = selIdx >= 0 ? lines.slice(selIdx + 1) : [];
+      var ans = String(q.answer || '').toUpperCase().replace(/[^A-Z]/g, '');
+      var opts = '';
+      optLines.forEach(function (ln) {
+        var m = ln.match(/^\s*-\s*([A-Za-z])[\.\、\)]\s*(.*)$/);
+        if (!m) return;
+        var letter = m[1].toUpperCase(), correct = showAns && ans.indexOf(letter) >= 0;
+        opts += '<label class="pv-opt' + (correct ? ' correct' : '') + '">'
+          + '<span class="pv-radio' + (correct ? ' correct' : '') + '"></span>'
+          + '<span class="pv-opt-body">' + letter + '. ' + inlineMd(m[2]) + '</span>'
+          + (correct ? '<span class="pv-badge">正确答案</span>' : '')
+          + '</label>';
+      });
+      return '<div class="pv-q">' + renderStem(stemLines) + '<ul class="pv-options">' + opts + '</ul></div>';
+    }
+    function buildPreview() {
+      var showAns = $('pvShowAns').checked;
+      var qs = lastData.questions, html = '<h3 class="pv-h3">选择题</h3>';
+      qs.forEach(function (q, i) { html += renderQuestion(q, showAns); if (i < qs.length - 1) html += '<hr class="pv-hr">'; });
+      $('previewBody').innerHTML = html;
+    }
+    function renderPreview() {
+      if (!lastData || !lastData.questions || !lastData.questions.length) { alert('请先生成题目后再预览'); return; }
+      buildPreview();
+      $('previewCard').style.display = 'block';
+      $('previewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    var pvShowAns = $('pvShowAns');
+    pvShowAns.checked = localStorage.getItem('ds-pv-answer') !== '0';
+    pvShowAns.addEventListener('change', function () {
+      localStorage.setItem('ds-pv-answer', pvShowAns.checked ? '1' : '0');
+      if (lastData && $('previewCard').style.display !== 'none') buildPreview();
+    });
+    $('btnPreview').addEventListener('click', renderPreview);
+    $('btnClosePreview').addEventListener('click', function () { $('previewCard').style.display = 'none'; });
+  </script>
 </body>
 </html>

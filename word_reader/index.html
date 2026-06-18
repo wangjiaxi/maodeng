@@ -8,282 +8,155 @@
   <script src="mammoth.browser.min.js"></script>
   <style>
     :root {
-      --primary: #121317;
-      --primary-hover: #3b5de7;
-      --bg: #f0f2f5;
-      --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --text: #1a202c;
-      --text-secondary: #64748b;
-      --radius: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --accent: #6366f1;
+      --accent2: #9333ea;
+      --ok: #16a34a;
+      --err: #dc2626;
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+      --mono: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
     }
 
-    .app-header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    .topbar {
+      display: flex; align-items: center; gap: 16px; padding: 16px 28px;
+      border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 20;
     }
+    .back { flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease; }
+    .back:hover { color: var(--text); border-color: var(--accent); }
+    .title-wrap h1 { font-size: 21px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
 
-    .app-header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--primary);
-    }
+    .app { max-width: 920px; margin: 0 auto; padding: 22px 24px 48px; display: flex; flex-direction: column; gap: 16px; }
 
-    .header-hint {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+    .card-head { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; }
+    .card-head .count { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 
-    .main-content {
-      flex: 1;
-      max-width: 900px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 24px;
-    }
+    .btn { font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.18s ease; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border: none; color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .btn.primary:hover { color: #fff; filter: brightness(1.06); }
+    .btn.sm { padding: 6px 11px; font-size: 12.5px; }
+    .btn.danger:hover { border-color: var(--err); color: var(--err); }
+    .row-btns { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
 
+    /* 上传 / 拖拽区 */
     .upload-area {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 48px 24px;
-      text-align: center;
-      background: var(--card-bg);
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      margin-bottom: 20px;
+      border: 2px dashed #c4c9d4; border-radius: 12px; padding: 46px 24px; text-align: center;
+      background: rgba(255,255,255,0.55); cursor: pointer; transition: all 0.2s ease; color: var(--muted);
     }
+    .upload-area:hover, .upload-area.dragging { border-color: var(--accent); background: rgba(99,102,241,0.06); color: var(--accent); }
+    .upload-area .label { font-size: 15px; font-weight: 600; color: var(--text); }
+    .upload-area .label strong { color: var(--accent); }
+    .upload-area .hint { font-size: 12.5px; color: var(--faint); margin-top: 6px; }
+    .upload-area input[type="file"] { display: none; }
 
-    .upload-area:hover {
-      border-color: var(--primary);
-      background: #fafbff;
-    }
-
-    .upload-area.dragging {
-      border-color: var(--primary);
-      background: #f0f4ff;
-    }
-
-    .upload-area .icon {
-      font-size: 40px;
-      margin-bottom: 12px;
-      color: #94a3b8;
-    }
-
-    .upload-area .label {
-      font-size: 15px;
-      color: var(--text-secondary);
-    }
-
-    .upload-area .label strong {
-      color: var(--primary);
-    }
-
-    .upload-area .hint {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 6px;
-    }
-
-    .upload-area input[type="file"] {
-      display: none;
-    }
-
-    .file-bar {
-      display: none;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-
+    /* 文件信息条 */
+    .file-bar { display: none; align-items: center; gap: 12px; }
     .file-bar.show { display: flex; }
+    .file-bar .file-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .file-bar .file-name {
-      flex: 1;
-      font-size: 13px;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .file-bar .btn-sm {
-      padding: 5px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--card-bg);
-      color: var(--text-secondary);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .file-bar .btn-sm:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .line-list {
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .line-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
-      border-bottom: 1px solid #f1f5f9;
-      transition: background 0.1s;
-    }
-
-    .line-item:last-child {
-      border-bottom: none;
-    }
-
-    .line-item:hover {
-      background: #f8fafc;
-    }
-
-    .line-item .line-num {
-      font-size: 11px;
-      color: #cbd5e1;
-      min-width: 32px;
-      text-align: right;
-      user-select: none;
-      font-family: 'Consolas', monospace;
-    }
-
-    .line-item .line-text {
-      flex: 1;
-      font-size: 14px;
-      line-height: 1.6;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-
+    /* 解析内容区 */
+    .line-list { display: flex; flex-direction: column; }
+    .line-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); transition: background 0.12s ease; }
+    .line-item:last-child { border-bottom: none; }
+    .line-item:hover { background: #f8fafc; }
+    .line-item .line-num { font-size: 11px; color: var(--faint); min-width: 32px; text-align: right; user-select: none; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .line-item .line-text { flex: 1; font-size: 14px; line-height: 1.65; color: #1e293b; word-break: break-word; white-space: pre-wrap; }
+    .line-item .line-actions { flex-shrink: 0; display: flex; gap: 6px; }
     .line-item .btn-copy {
-      flex-shrink: 0;
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      background: var(--card-bg);
-      color: var(--text-secondary);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-      user-select: none;
+      flex-shrink: 0; padding: 5px 11px; border: 1px solid var(--border); border-radius: 8px;
+      background: #fff; color: var(--muted); font-size: 12px; font-family: inherit; cursor: pointer;
+      transition: all 0.18s ease; user-select: none;
     }
+    .line-item .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+    .line-item .btn-copy.copied { border-color: var(--ok); color: var(--ok); }
+    .line-item .btn-copy-clean { border-color: #c7d2fe; color: var(--accent); }
+    .line-item .btn-copy-clean:hover { background: #eef2ff; border-color: var(--accent); color: var(--accent); }
 
-    .line-item .btn-copy:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
+    .empty-state { text-align: center; padding: 56px 20px; color: var(--faint); }
+    .empty-state .title { font-size: 14.5px; font-weight: 600; color: var(--muted); }
+    .empty-state .sub { font-size: 12.5px; margin-top: 6px; }
 
-    .line-item .btn-copy.copied {
-      border-color: #27ae60;
-      color: #27ae60;
-    }
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(22,24,29,0.92); color: #fff; padding: 10px 20px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 50; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #94a3b8;
-    }
-
-    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      top: 70px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: #1a202c;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      opacity: 0;
-      transition: all 0.3s;
-      z-index: 9999;
-      pointer-events: none;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 14px 18px; }
+      .app { padding: 18px 16px 40px; }
+      .line-item { flex-wrap: wrap; }
+      .line-item .line-actions { width: 100%; justify-content: flex-end; }
+    }
   </style>
 </head>
 <body>
+  <header class="topbar">
+    <a class="back" href="https://maodeng.xkloj.online">← 猫凳系统</a>
+    <div class="title-wrap">
+      <h1>Word 文档阅读器</h1>
+      <p>Word 内容快速解析</p>
+    </div>
+  </header>
 
-<div class="app-header">
-  <h1>Word 文档阅读器</h1>
-  <span class="header-hint">上传 .docx 文件，查看纯文本内容</span>
-</div>
+  <div class="app">
+    <div class="upload-area" id="uploadArea">
+      <div class="label">点击或拖拽上传 <strong>.docx</strong> 文件</div>
+      <div class="hint">仅支持 .docx 格式</div>
+      <input type="file" id="fileInput" accept=".docx">
+    </div>
 
-<div class="main-content">
-  <div class="upload-area" id="uploadArea">
-    <div class="icon">📄</div>
-    <div class="label">点击或拖拽上传 <strong>.docx</strong> 文件</div>
-    <div class="hint">仅支持 .docx 格式</div>
-    <input type="file" id="fileInput" accept=".docx">
-  </div>
+    <div class="card file-bar" id="fileBar">
+      <div class="card-body" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+        <span class="file-name" id="fileName"></span>
+        <button class="btn sm" onclick="copyAll()">复制全部</button>
+        <button class="btn sm danger" onclick="resetFile()">重新上传</button>
+      </div>
+    </div>
 
-  <div class="file-bar" id="fileBar">
-    <span class="file-name" id="fileName"></span>
-    <button class="btn-sm" onclick="copyAll()">复制全部</button>
-    <button class="btn-sm" onclick="resetFile()">重新上传</button>
-  </div>
-
-  <div id="contentArea">
-    <div class="empty-state" id="emptyState">
-      <div class="icon">📝</div>
-      <div>上传 Word 文档后，内容将在此显示</div>
+    <div id="contentArea">
+      <div class="card">
+        <div class="empty-state" id="emptyState">
+          <div class="title">上传 Word 文档后，内容将在此显示</div>
+          <div class="sub">解析后每行可单独复制，题目行还可一键去除编号与空括号</div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <div id="toast"></div>
 
 <script>
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const fileBar = document.getElementById('fileBar');
 const contentArea = document.getElementById('contentArea');
+
+// 解析后的行文本，供复制按钮读取
+let docLines = [];
+
+// 行首编号匹配：1. / 2. / A. / B. / 一、 / 1、 / （1） / (A) 等
+const NUMBER_PREFIX_RE = /^\s*[（(]?\s*(?:[0-9]{1,3}|[A-Za-z]|[一二三四五六七八九十]{1,3})\s*[）)、.．]\s*/;
+
+// 行尾答题空括号匹配：（      ） / (  ) / （） 等（仅空白内容，不动有文字的括号和题干中间的括号）
+const ANSWER_BLANK_RE = /\s*[（(]\s*[）)]\s*$/;
 
 uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -324,47 +197,55 @@ async function handleFile(file) {
     const text = result.value.trim();
     renderLines(text);
   } catch (e) {
-    contentArea.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><div>文件解析失败</div></div>';
+    contentArea.innerHTML = '<div class="card"><div class="empty-state"><div class="title">文件解析失败</div><div class="sub">请确认文件为有效的 .docx 格式</div></div></div>';
     showToast('文件解析失败');
   }
 }
 
 function renderLines(text) {
-  const lines = text.split('\n');
-  if (lines.length === 0 || (lines.length === 1 && lines[0].trim() === '')) {
-    contentArea.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div>文档内容为空</div></div>';
+  // 过滤空行，避免解析后出现大量空白行
+  docLines = text.split('\n').filter(line => line.trim() !== '');
+  if (docLines.length === 0) {
+    contentArea.innerHTML = '<div class="card"><div class="empty-state"><div class="title">文档内容为空</div></div></div>';
     return;
   }
 
-  let html = '<div class="line-list">';
-  lines.forEach((line, i) => {
+  let html = '<div class="card"><div class="card-head">解析内容<span class="count">' + docLines.length + ' 行</span></div><div class="line-list">';
+  docLines.forEach((line, i) => {
     const escaped = escapeHtml(line);
+    const hasNum = NUMBER_PREFIX_RE.test(line);
+    const cleanBtn = hasNum
+      ? `<button class="btn-copy btn-copy-clean" onclick="copyLine(this, ${i}, true)" title="复制题目内容，自动去掉行首编号（如 1. A.）和行尾空括号（   ）">仅复制内容</button>`
+      : '';
     html += `<div class="line-item">
       <span class="line-num">${i + 1}</span>
       <span class="line-text">${escaped}</span>
-      <button class="btn-copy" onclick="copyLine(this, ${i})">复制</button>
+      <div class="line-actions">
+        ${cleanBtn}
+        <button class="btn-copy" onclick="copyLine(this, ${i}, false)">复制</button>
+      </div>
     </div>`;
   });
-  html += '</div>';
+  html += '</div></div>';
   contentArea.innerHTML = html;
 }
 
-function copyLine(btn, index) {
-  const text = btn.previousElementSibling.textContent;
+function copyLine(btn, index, stripNum) {
+  let text = docLines[index] || '';
+  if (stripNum) text = text.replace(NUMBER_PREFIX_RE, '').replace(ANSWER_BLANK_RE, '');
+  const label = btn.textContent;
   navigator.clipboard.writeText(text).then(() => {
     btn.textContent = '已复制';
     btn.classList.add('copied');
     setTimeout(() => {
-      btn.textContent = '复制';
+      btn.textContent = label;
       btn.classList.remove('copied');
     }, 1500);
   });
 }
 
 function copyAll() {
-  const texts = [];
-  contentArea.querySelectorAll('.line-text').forEach(el => texts.push(el.textContent));
-  navigator.clipboard.writeText(texts.join('\n')).then(() => {
+  navigator.clipboard.writeText(docLines.join('\n')).then(() => {
     showToast('已复制全部内容');
   });
 }
@@ -373,7 +254,8 @@ function resetFile() {
   fileBar.classList.remove('show');
   uploadArea.style.display = '';
   fileInput.value = '';
-  contentArea.innerHTML = '<div class="empty-state" id="emptyState"><div class="icon">📝</div><div>上传 Word 文档后，内容将在此显示</div></div>';
+  docLines = [];
+  contentArea.innerHTML = '<div class="card"><div class="empty-state" id="emptyState"><div class="title">上传 Word 文档后，内容将在此显示</div><div class="sub">解析后每行可单独复制，题目行还可一键去除编号与空括号</div></div></div>';
 }
 
 function escapeHtml(str) {

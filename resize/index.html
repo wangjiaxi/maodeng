@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="../favicon.png">
+  <title>选项图尺寸统一</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --accent: #6366f1;
+      --accent2: #9333ea;
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+      --red: #ef4444;
+      --green: #10b981;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
+
+    /* ── 顶栏 ── */
+    .topbar {
+      display: flex; align-items: center; gap: 18px; padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 20;
+    }
+    .back {
+      flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none;
+      padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease;
+    }
+    .back:hover { color: var(--text); border-color: var(--accent); }
+    .title-wrap h1 {
+      font-size: 22px; font-weight: 800; letter-spacing: 1px;
+      background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+
+    /* ── 主体 ── */
+    .app { max-width: 1320px; margin: 0 auto; padding: 22px 24px 40px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── 上传区 ── */
+    .dropzone-wrap {
+      position: relative;
+      border: 2px dashed #c4c9d4; border-radius: 16px;
+      min-height: 140px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s ease;
+      background: rgba(255,255,255,0.4);
+    }
+    .dropzone-wrap:hover, .dropzone-wrap.drag {
+      border-color: var(--accent); background: rgba(99,102,241,0.05);
+    }
+    .dropzone-wrap.has-files {
+      border-style: solid; border-color: var(--border); min-height: auto;
+      padding: 16px 20px; justify-content: flex-start; cursor: default;
+    }
+    .dropzone-wrap.has-files:hover { border-color: var(--border); background: rgba(255,255,255,0.4); }
+    .dz-placeholder { text-align: center; pointer-events: none; }
+    .dz-placeholder .dz-icon { margin-bottom: 8px; }
+    .dz-placeholder .dz-icon svg { display: block; margin: 0 auto; }
+    .dz-placeholder .dz-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .dz-placeholder .dz-sub { font-size: 12.5px; margin-top: 6px; color: var(--faint); }
+    .has-files .dz-placeholder { display: none; }
+
+    .file-summary { display: none; width: 100%; }
+    .has-files .file-summary { display: block; }
+    .file-summary .fs-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .file-summary .fs-head .count { font-size: 14px; font-weight: 600; }
+    .file-summary .fs-head .count span { color: var(--accent); }
+    .file-summary .fs-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .file-summary .fs-names {
+      font-size: 12px; color: var(--muted); max-height: 60px; overflow-y: auto;
+      line-height: 1.7; word-break: break-all;
+    }
+
+    /* ── 工具栏 ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 13px 18px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: var(--shadow);
+    }
+    .toolbar .label-row { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+    .toolbar select {
+      font-family: inherit; font-size: 13px; color: var(--text); padding: 6px 9px;
+      border: 1px solid var(--border); border-radius: 8px; background: #fff; outline: none; cursor: pointer;
+    }
+    .toolbar select:focus { border-color: var(--accent); }
+    .spacer { flex: 1; }
+
+    /* ── 按钮 ── */
+    .btn {
+      font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 14px;
+      border-radius: 9px; border: 1px solid var(--border); background: #fff;
+      color: var(--text); cursor: pointer; transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border: none; color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .btn.primary:hover { color: #fff; filter: brightness(1.06); }
+    .btn.danger { border-color: #fecaca; color: var(--red); }
+    .btn.danger:hover { border-color: var(--red); background: #fef2f2; }
+    .btn.small { font-size: 12px; padding: 5px 10px; }
+    .btn:disabled { opacity: 0.4; pointer-events: none; }
+
+    /* ── 分组卡片网格 ── */
+    .groups-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px;
+    }
+    .group-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: var(--shadow); overflow: hidden; transition: border-color 0.2s ease;
+    }
+    .group-card:hover { border-color: rgba(99,102,241,0.3); }
+    .group-card .gc-head {
+      display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px;
+    }
+    .group-card .gc-head .gc-title { font-size: 15px; font-weight: 700; flex: 1; }
+    .group-card .gc-head .gc-badge {
+      font-size: 11px; padding: 3px 9px; border-radius: 999px;
+      background: rgba(99,102,241,0.1); color: var(--accent); font-weight: 600;
+    }
+    .group-card .gc-options {
+      display: flex; gap: 8px; padding: 0 16px 14px; flex-wrap: wrap;
+    }
+    .option-thumb {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      width: 78px; flex-shrink: 0;
+    }
+    .option-thumb .ot-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #f3f4f6; display: flex; align-items: center; justify-content: center;
+    }
+    .option-thumb .ot-img-wrap {
+      width: 72px; height: 72px; border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border); background:
+        linear-gradient(45deg, #eceef3 25%, transparent 25%, transparent 75%, #eceef3 75%) 0 0/14px 14px,
+        linear-gradient(45deg, #eceef3 25%, #f7f8fb 25%, #f7f8fb 75%, #eceef3 75%) 7px 7px/14px 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .option-thumb .ot-img-wrap img {
+      max-width: 100%; max-height: 100%; object-fit: contain;
+    }
+    .option-thumb .ot-size { font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .group-card .gc-info {
+      margin: 0 16px; padding: 10px 12px; background: #f8f9fc; border-radius: 9px;
+      font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .group-card .gc-info .unified { font-weight: 600; color: var(--accent); }
+    .group-card .gc-actions {
+      display: flex; gap: 8px; padding: 12px 16px 14px; flex-wrap: wrap;
+    }
+
+    /* ── 预览弹窗 ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--card); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      max-width: 90vw; max-height: 85vh; overflow-y: auto; padding: 24px;
+      display: flex; flex-direction: column; gap: 16px;
+      transform: translateY(10px); transition: transform 0.25s ease;
+    }
+    .modal-overlay.active .modal { transform: translateY(0); }
+    .modal h3 { font-size: 18px; font-weight: 700; }
+    .modal .preview-grid {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start;
+    }
+    .modal .preview-item {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 10px; border: 1px solid var(--border); border-radius: 12px;
+      background: #fafbfc;
+    }
+    .modal .preview-item .pi-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .modal .preview-item canvas {
+      border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      image-rendering: auto;
+    }
+    .modal .preview-item .pi-size { font-size: 11px; color: var(--faint); }
+    .modal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(22,24,29,0.92); color: #fff; padding: 10px 20px; border-radius: 999px;
+      font-size: 13px; opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 200;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── 空状态 ── */
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--faint);
+    }
+    .empty-state .empty-icon { margin-bottom: 12px; }
+    .empty-state .empty-icon svg { display: block; margin: 0 auto; }
+    .empty-state .empty-text { font-size: 14px; }
+
+    /* ── 重新分组弹窗 ── */
+    .regroup-mini {
+      display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted);
+      padding: 6px 10px; background: #fffbeb; border-radius: 8px; border: 1px solid #fde68a;
+    }
+    .regroup-mini input {
+      width: 60px; font-family: inherit; font-size: 12px; padding: 4px 7px;
+      border: 1px solid var(--border); border-radius: 6px; outline: none;
+    }
+    .regroup-mini input:focus { border-color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 14px 16px; gap: 10px; }
+      .topbar .title-wrap h1 { font-size: 18px; }
+      .app { padding: 14px 12px 32px; }
+      .groups-grid { grid-template-columns: 1fr; }
+      .toolbar { gap: 8px; }
+      .group-card .gc-options { gap: 4px; }
+      .option-thumb { width: 64px; }
+      .option-thumb .ot-img-wrap { width: 58px; height: 58px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── 顶栏 ── -->
+  <header class="topbar">
+    <a class="back" href="https://maodeng.xkloj.online">← 猫凳系统</a>
+    <div class="title-wrap">
+      <h1>选项图尺寸统一</h1>
+      <p>上传题目选项图片，按文件名自动分组，将每组图片统一为相同尺寸（不足处补透明）</p>
+    </div>
+  </header>
+
+  <!-- ── 主体 ── -->
+  <div class="app">
+
+    <!-- 上传区 -->
+    <div class="dropzone-wrap" id="dropzone">
+      <div class="dz-placeholder">
+        <div class="dz-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        <p class="dz-title">点击或拖拽上传选项图片</p>
+        <p class="dz-sub">支持批量上传 PNG / JPG / WebP / BMP / GIF，按文件名自动按题目分组</p>
+      </div>
+      <div class="file-summary" id="fileSummary">
+        <div class="fs-head">
+          <span class="count">已选 <span id="fileCount">0</span> 张图片，分为 <span id="groupCount">0</span> 组</span>
+          <span class="spacer"></span>
+          <button class="btn small" id="btnAddMore">+ 继续添加</button>
+          <button class="btn small danger" id="btnClear">清空</button>
+        </div>
+        <div class="fs-names" id="fileNames"></div>
+      </div>
+    </div>
+
+    <!-- 隐藏的文件选择器 -->
+    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/bmp,image/gif" multiple style="display:none">
+
+    <!-- 工具栏 -->
+    <div class="toolbar" id="toolbar">
+      <span class="label-row">对齐方式
+        <select id="selAlign">
+          <option value="top-left">左上角</option>
+          <option value="top-center">顶部居中</option>
+          <option value="top-right">右上角</option>
+          <option value="center-left">左侧居中</option>
+          <option value="center" selected>正中央</option>
+          <option value="center-right">右侧居中</option>
+          <option value="bottom-left">左下角</option>
+          <option value="bottom-center">底部居中</option>
+          <option value="bottom-right">右下角</option>
+        </select>
+      </span>
+      <span class="label-row">分隔符
+        <select id="selSep">
+          <option value="auto">自动检测</option>
+          <option value="-">短横线 -</option>
+          <option value="_">下划线 _</option>
+        </select>
+      </span>
+      <span class="spacer"></span>
+      <button class="btn primary" id="btnProcess">开始调整</button>
+      <button class="btn primary" id="btnDownloadAll" disabled>下载全部 ZIP</button>
+    </div>
+
+    <!-- 分组展示 -->
+    <div class="groups-grid" id="groupsGrid">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <p class="empty-text">上传图片后，这里会按题目自动分组显示</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── 预览弹窗 ── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <h3 id="modalTitle">预览</h3>
+      <div class="preview-grid" id="previewGrid"></div>
+      <div class="modal-actions">
+        <button class="btn small" id="btnModalClose">关闭</button>
+        <button class="btn small primary" id="btnModalDownload">下载此题</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ── -->
+  <div id="toast"></div>
+
+  <script src="jszip.min.js"></script>
+  <script>
+  (function () {
+    // ── DOM 引用 ──
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileSummary = document.getElementById('fileSummary');
+    const fileCountEl = document.getElementById('fileCount');
+    const groupCountEl = document.getElementById('groupCount');
+    const fileNamesEl = document.getElementById('fileNames');
+    const groupsGrid = document.getElementById('groupsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const selAlign = document.getElementById('selAlign');
+    const selSep = document.getElementById('selSep');
+    const toolbar = document.getElementById('toolbar');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const previewGrid = document.getElementById('previewGrid');
+    const toast = document.getElementById('toast');
+
+    // ── 状态 ──
+    let fileItems = [];        // { name, file, img, w, h }
+    let groups = {};          // { groupKey: [fileItem, ...] }
+    let groupMeta = {};       // { groupKey: { maxW, maxH, options: ['a','b','c','d'] } }
+    let hasAdjusted = false;  // 是否已执行统一尺寸
+    let currentPreviewGroup = null;
+    let toastTimer = null;
+
+    // ── Toast ──
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // ── 文件名解析 ──
+    function parseFilename(filename) {
+      // 去掉扩展名
+      const stem = filename.replace(/\.[^.]+$/, '');
+      const sep = selSep.value;
+
+      // 尝试用指定分隔符或自动检测
+      let separators = [];
+      if (sep === 'auto') {
+        separators = ['-', '_'];
+      } else {
+        separators = [sep];
+      }
+
+      for (const s of separators) {
+        const idx = stem.lastIndexOf(s);
+        if (idx > 0 && idx < stem.length - 1) {
+          const prefix = stem.substring(0, idx);
+          const suffix = stem.substring(idx + 1);
+          // suffix 应该像选项标识 (a/b/c/d 或 A/B/C/D, 1-2字符)
+          if (suffix.length <= 3 && /^[a-zA-Z0-9]+$/.test(suffix)) {
+            return { groupKey: prefix, option: suffix.toLowerCase() };
+          }
+        }
+      }
+
+      // 无法解析：整个 stem 作为 groupKey，无 option
+      return { groupKey: stem, option: '' };
+    }
+
+    // ── 重新分组（仅分组，不计算统一尺寸） ──
+    function regroup() {
+      groups = {};
+      for (const item of fileItems) {
+        const parsed = parseFilename(item.name);
+        const key = parsed.groupKey;
+        if (!groups[key]) groups[key] = [];
+        item.option = parsed.option;
+        groups[key].push(item);
+      }
+    }
+
+    // ── 执行统一尺寸计算 ──
+    function processAll() {
+      if (fileItems.length === 0) {
+        showToast('请先上传图片');
+        return;
+      }
+
+      groupMeta = {};
+      for (const [key, items] of Object.entries(groups)) {
+        let maxW = 0, maxH = 0;
+        for (const item of items) {
+          maxW = Math.max(maxW, item.w);
+          maxH = Math.max(maxH, item.h);
+        }
+        groupMeta[key] = { maxW, maxH };
+      }
+      hasAdjusted = true;
+      renderUI();
+      showToast(`已处理 ${Object.keys(groups).length} 组图片`);
+    }
+
+    // ── 对齐坐标计算 ──
+    function getOffset(canvasW, canvasH, imgW, imgH, align) {
+      let dx, dy;
+      switch (align) {
+        case 'top-left':      dx = 0;                  dy = 0;                  break;
+        case 'top-center':    dx = (canvasW - imgW) >> 1; dy = 0;               break;
+        case 'top-right':     dx = canvasW - imgW;     dy = 0;                  break;
+        case 'center-left':   dx = 0;                  dy = (canvasH - imgH) >> 1; break;
+        case 'center':        dx = (canvasW - imgW) >> 1; dy = (canvasH - imgH) >> 1; break;
+        case 'center-right':  dx = canvasW - imgW;     dy = (canvasH - imgH) >> 1; break;
+        case 'bottom-left':   dx = 0;                  dy = canvasH - imgH;     break;
+        case 'bottom-center': dx = (canvasW - imgW) >> 1; dy = canvasH - imgH;  break;
+        case 'bottom-right':  dx = canvasW - imgW;     dy = canvasH - imgH;     break;
+        default:              dx = 0;                  dy = 0;
+      }
+      return { dx, dy };
+    }
+
+    // ── 生成统一尺寸后的 Canvas ──
+    function unifyImage(img, maxW, maxH, align) {
+      const canvas = document.createElement('canvas');
+      canvas.width = maxW;
+      canvas.height = maxH;
+      const ctx = canvas.getContext('2d');
+      // Canvas 默认透明，无需额外操作
+      const { dx, dy } = getOffset(maxW, maxH, img.naturalWidth, img.naturalHeight, align);
+      ctx.drawImage(img, dx, dy);
+      return canvas;
+    }
+
+    // ── Canvas 转 Blob ──
+    function canvasToBlob(canvas) {
+      return new Promise(resolve => {
+        canvas.toBlob(blob => resolve(blob), 'image/png');
+      });
+    }
+
+    // ── 加载图片 ──
+    function loadImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => resolve({ img, w: img.naturalWidth, h: img.naturalHeight });
+          img.onerror = () => reject(new Error('图片解码失败'));
+          img.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error('文件读取失败'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ── 处理上传的文件 ──
+    async function handleFiles(files) {
+      const validFiles = Array.from(files).filter(f => {
+        const ext = f.name.split('.').pop().toLowerCase();
+        return ['png','jpg','jpeg','webp','bmp','gif'].includes(ext);
+      });
+
+      if (validFiles.length === 0) {
+        showToast('未识别到支持的图片文件');
+        return;
+      }
+
+      if (validFiles.length < files.length) {
+        showToast(`已过滤 ${files.length - validFiles.length} 个非图片文件`);
+      }
+
+      showToast(`正在加载 ${validFiles.length} 张图片...`);
+
+      const newItems = [];
+      for (const file of validFiles) {
+        try {
+          const { img, w, h } = await loadImage(file);
+          newItems.push({ name: file.name, file, img, w, h, option: '' });
+        } catch (e) {
+          console.warn('跳过:', file.name, e.message);
+        }
+      }
+
+      if (newItems.length === 0) {
+        showToast('所有图片加载失败');
+        return;
+      }
+
+      // 合并到现有列表（去重：按文件名）
+      const existingNames = new Set(fileItems.map(f => f.name));
+      const trulyNew = newItems.filter(f => !existingNames.has(f.name));
+      fileItems.push(...trulyNew);
+
+      if (trulyNew.length < newItems.length) {
+        showToast(`新增 ${trulyNew.length} 张（已跳过重复）`);
+      }
+
+      refreshAll();
+    }
+
+    // ── 刷新全部 ──
+    function refreshAll() {
+      hasAdjusted = false;
+      groupMeta = {};
+      regroup();
+      renderUI();
+    }
+
+    // ── 渲染 UI ──
+    function renderUI() {
+      const totalGroups = Object.keys(groups).length;
+
+      // 上传区状态
+      if (fileItems.length > 0) {
+        dropzone.classList.add('has-files');
+        fileCountEl.textContent = fileItems.length;
+        groupCountEl.textContent = totalGroups;
+        fileNamesEl.textContent = fileItems.map(f => f.name).join('、');
+      } else {
+        dropzone.classList.remove('has-files');
+      }
+
+      // 工具栏
+      toolbar.style.display = fileItems.length > 0 ? '' : 'none';
+      const btnDownloadAll = document.getElementById('btnDownloadAll');
+      const btnProcess = document.getElementById('btnProcess');
+      if (btnDownloadAll) btnDownloadAll.disabled = !hasAdjusted;
+      if (btnProcess) btnProcess.disabled = fileItems.length === 0 || hasAdjusted;
+
+      // 分组展示
+      if (totalGroups === 0 && fileItems.length === 0) {
+        emptyState.style.display = '';
+        groupsGrid.querySelectorAll('.group-card').forEach(c => c.remove());
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      // 按自然排序 group key
+      const sortedKeys = Object.keys(groups).sort((a, b) => {
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      // 移除旧卡片
+      groupsGrid.querySelectorAll('.group-card').forEach(c => c.remove());
+
+      for (const key of sortedKeys) {
+        const items = groups[key];
+        const meta = groupMeta[key];
+        const card = buildGroupCard(key, items, meta);
+        groupsGrid.appendChild(card);
+      }
+    }
+
+    // ── 构建分组卡片 ──
+    function buildGroupCard(key, items, meta) {
+      const card = document.createElement('div');
+      card.className = 'group-card';
+      card.dataset.group = key;
+
+      const align = selAlign.value;
+
+      // 头部
+      const head = document.createElement('div');
+      head.className = 'gc-head';
+      head.innerHTML = `
+        <span class="gc-title">${escapeHtml(key)}</span>
+        <span class="gc-badge">${items.length} 个选项</span>
+      `;
+      card.appendChild(head);
+
+      // 选项缩略图
+      const optsDiv = document.createElement('div');
+      optsDiv.className = 'gc-options';
+
+      // 按 option 名排序
+      const sortedItems = [...items].sort((a, b) =>
+        a.option.localeCompare(b.option, undefined, { numeric: true, sensitivity: 'base' })
+      );
+
+      for (const item of sortedItems) {
+        const thumb = document.createElement('div');
+        thumb.className = 'option-thumb';
+
+        const label = item.option || '?';
+        thumb.innerHTML = `
+          <span class="ot-label">${escapeHtml(label.toUpperCase())}</span>
+          <div class="ot-img-wrap">
+            <img src="${item.img.src}" alt="${escapeHtml(item.name)}">
+          </div>
+          <span class="ot-size">${item.w}×${item.h}</span>
+        `;
+        optsDiv.appendChild(thumb);
+      }
+      card.appendChild(optsDiv);
+
+      // 信息栏
+      const info = document.createElement('div');
+      info.className = 'gc-info';
+      if (meta) {
+        info.innerHTML = `
+          <span>统一尺寸：<b class="unified">${meta.maxW} x ${meta.maxH}</b></span>
+          <span>对齐：${getAlignLabel(align)}</span>
+        `;
+      } else {
+        info.innerHTML = `<span style="color:var(--faint)">尚未调整</span>`;
+      }
+      card.appendChild(info);
+
+      // 操作按钮
+      const actions = document.createElement('div');
+      actions.className = 'gc-actions';
+      if (meta) {
+        actions.innerHTML = `
+          <button class="btn small" data-action="preview">预览</button>
+          <button class="btn small primary" data-action="download">下载此题</button>
+        `;
+      } else {
+        actions.innerHTML = `
+          <button class="btn small" disabled>预览</button>
+          <button class="btn small primary" disabled>下载此题</button>
+        `;
+      }
+      card.appendChild(actions);
+
+      // 事件绑定（仅在已调整时生效）
+      if (meta) {
+        card.querySelector('[data-action="preview"]').addEventListener('click', () => openPreview(key));
+        card.querySelector('[data-action="download"]').addEventListener('click', () => downloadGroup(key));
+      }
+
+      return card;
+    }
+
+    // ── 预览弹窗 ──
+    function openPreview(groupKey) {
+      const items = groups[groupKey];
+      const meta = groupMeta[groupKey];
+      if (!items) return;
+
+      currentPreviewGroup = groupKey;
+      modalTitle.textContent = `预览：${groupKey}`;
+      previewGrid.innerHTML = '';
+
+      const align = selAlign.value;
+      const sortedItems = [...items].sort((a, b) =>
+        a.option.localeCompare(b.option, undefined, { numeric: true, sensitivity: 'base' })
+      );
+
+      // 计算预览缩放：让最大的统一画布适合 400px 宽
+      const previewMaxDim = 400;
+      const scale = Math.min(1, previewMaxDim / Math.max(meta.maxW, meta.maxH, 1));
+
+      for (const item of sortedItems) {
+        const canvas = unifyImage(item.img, meta.maxW, meta.maxH, align);
+
+        const displayCanvas = document.createElement('canvas');
+        displayCanvas.width = Math.round(meta.maxW * scale);
+        displayCanvas.height = Math.round(meta.maxH * scale);
+        const dctx = displayCanvas.getContext('2d');
+        dctx.drawImage(canvas, 0, 0, displayCanvas.width, displayCanvas.height);
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'preview-item';
+
+        const label = item.option || '?';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'pi-label';
+        labelEl.textContent = label.toUpperCase();
+        itemDiv.appendChild(labelEl);
+        itemDiv.appendChild(displayCanvas);
+
+        const sizeEl = document.createElement('span');
+        sizeEl.className = 'pi-size';
+        sizeEl.textContent = `${meta.maxW}x${meta.maxH}`;
+        itemDiv.appendChild(sizeEl);
+
+        previewGrid.appendChild(itemDiv);
+      }
+
+      modalOverlay.classList.add('active');
+    }
+
+    function closePreview() {
+      modalOverlay.classList.remove('active');
+      currentPreviewGroup = null;
+    }
+
+    // ── 下载单个分组 ──
+    async function downloadGroup(groupKey) {
+      if (!hasAdjusted) { showToast('请先点击「开始调整」'); return; }
+      const items = groups[groupKey];
+      const meta = groupMeta[groupKey];
+      if (!items) return;
+
+      const align = selAlign.value;
+
+      if (items.length === 1) {
+        // 单张图直接下载
+        const item = items[0];
+        const canvas = unifyImage(item.img, meta.maxW, meta.maxH, align);
+        const blob = await canvasToBlob(canvas);
+        triggerDownload(blob, item.name.replace(/\.[^.]+$/, '') + '.png');
+      } else {
+        // 多张图打成 zip
+        const zip = new JSZip();
+        for (const item of items) {
+          const canvas = unifyImage(item.img, meta.maxW, meta.maxH, align);
+          const blob = await canvasToBlob(canvas);
+          const outName = item.name.replace(/\.[^.]+$/, '') + '.png';
+          zip.file(outName, blob);
+        }
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        triggerDownload(zipBlob, `${groupKey}.zip`);
+      }
+
+      showToast(`已下载：${groupKey}`);
+    }
+
+    // ── 下载全部 ──
+    async function downloadAll() {
+      if (!hasAdjusted) { showToast('请先点击「开始调整」'); return; }
+      const totalItems = fileItems.length;
+      if (totalItems === 0) {
+        showToast('没有可下载的图片');
+        return;
+      }
+
+      showToast(`正在打包 ${totalItems} 张图片...`);
+
+      const align = selAlign.value;
+      const zip = new JSZip();
+
+      for (const [groupKey, items] of Object.entries(groups)) {
+        const meta = groupMeta[groupKey];
+        // 每组放入一个子文件夹
+        const folder = zip.folder(groupKey);
+        for (const item of items) {
+          const canvas = unifyImage(item.img, meta.maxW, meta.maxH, align);
+          const blob = await canvasToBlob(canvas);
+          const outName = item.name.replace(/\.[^.]+$/, '') + '.png';
+          folder.file(outName, blob);
+        }
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      triggerDownload(zipBlob, '统一尺寸输出.zip');
+      showToast(`打包完成！共 ${Object.keys(groups).length} 组、${totalItems} 张图`);
+    }
+
+    // ── 触发浏览器下载 ──
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // ── 辅助 ──
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getAlignLabel(align) {
+      const map = {
+        'top-left': '左上角', 'top-center': '顶部居中', 'top-right': '右上角',
+        'center-left': '左侧居中', 'center': '正中央', 'center-right': '右侧居中',
+        'bottom-left': '左下角', 'bottom-center': '底部居中', 'bottom-right': '右下角',
+      };
+      return map[align] || align;
+    }
+
+    // ── 事件绑定 ──
+
+    // 点击上传
+    dropzone.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return; // 不拦截按钮点击
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleFiles(fileInput.files);
+        fileInput.value = '';
+      }
+    });
+
+    // 拖拽上传
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+      if (e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    });
+
+    // 也支持粘贴图片
+    document.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files = [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          files.push(item.getAsFile());
+        }
+      }
+      if (files.length > 0) {
+        e.preventDefault();
+        handleFiles(files);
+      }
+    });
+
+    // 继续添加
+    document.getElementById('btnAddMore').addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+
+    // 清空
+    document.getElementById('btnClear').addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileItems = [];
+      groups = {};
+      groupMeta = {};
+      refreshAll();
+      showToast('已清空全部图片');
+    });
+
+    // 对齐方式变化 → 刷新卡片信息（保持已调整状态）
+    selAlign.addEventListener('change', () => {
+      if (fileItems.length > 0) {
+        renderUI();
+      }
+    });
+
+    // 分隔符变化 → 重新分组
+    selSep.addEventListener('change', () => {
+      if (fileItems.length > 0) {
+        refreshAll();
+        showToast('已按新分隔符重新分组');
+      }
+    });
+
+    // 开始调整
+    document.getElementById('btnProcess').addEventListener('click', processAll);
+
+    // 下载全部
+    document.getElementById('btnDownloadAll').addEventListener('click', downloadAll);
+
+    // 弹窗关闭
+    document.getElementById('btnModalClose').addEventListener('click', closePreview);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closePreview();
+    });
+
+    // 弹窗内下载
+    document.getElementById('btnModalDownload').addEventListener('click', () => {
+      if (currentPreviewGroup) {
+        downloadGroup(currentPreviewGroup);
+        closePreview();
+      }
+    });
+
+    // ESC 关闭弹窗
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePreview();
+    });
+
+    // ── 初始化：工具栏默认隐藏 ──
+    toolbar.style.display = 'none';
+
+  })();
+  </script>
+</body>
+</html>

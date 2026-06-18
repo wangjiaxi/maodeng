@@ -7,337 +7,210 @@
   <title>文档智能校验</title>
   <style>
     :root {
-      --primary: #4a6cf7;
-      --primary-hover: #3b5de7;
-      --danger: #e74c3c;
-      --danger-hover: #c0392b;
-      --success: #27ae60;
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --accent: #6366f1;
+      --accent2: #9333ea;
+      --ok: #16a34a;
+      --err: #dc2626;
       --warning: #f59e0b;
-      --bg: #f0f2f5;
-      --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --text: #1a202c;
-      --text-secondary: #64748b;
-      --radius: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+      --mono: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
     }
 
-    .app-header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* Topbar */
+    .topbar {
+      display: flex; align-items: center; gap: 16px; padding: 16px 28px;
+      border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100;
     }
-    .app-header h1 { font-size: 18px; font-weight: 600; color: var(--primary); }
-    .header-hint { font-size: 13px; color: var(--text-secondary); }
+    .back { flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease; }
+    .back:hover { color: var(--text); border-color: var(--accent); }
+    .title-wrap h1 { font-size: 21px; font-weight: 800; letter-spacing: 1px; background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
 
-    .app-body {
-      max-width: 960px;
-      margin: 24px auto;
-      padding: 0 20px 40px;
-    }
+    /* Layout */
+    .app-body { max-width: 960px; margin: 0 auto; padding: 24px 24px 48px; }
 
     /* Card */
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
-    .card-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-title .icon { font-size: 18px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 22px 24px; margin-bottom: 18px; }
+    .card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
 
     /* Form */
-    .form-row {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    .form-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .form-group label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12.5px; color: var(--muted); font-weight: 500; }
     .form-group input[type="text"],
     .form-group input[type="password"],
     .form-group textarea,
     .form-group select {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      width: 100%;
-      background: var(--card-bg);
-      color: var(--text);
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; outline: none;
+      transition: border-color 0.15s ease; width: 100%; background: #fff; color: var(--text);
+      font-family: inherit;
     }
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(74,108,247,0.12);
-    }
-
-    .api-link {
-      white-space: nowrap;
-      font-size:13px; color:#fff;
-      background:var(--primary); border:none;
-      padding:8px 14px; border-radius:var(--radius);
-      text-decoration:none; cursor:pointer;
-      transition:background .15s; flex-shrink:0;
-    }
-    .api-link:hover { background:var(--primary-hover); }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--accent); }
     .form-group textarea {
-      resize: vertical;
-      min-height: 200px;
-      line-height: 1.7;
+      resize: vertical; min-height: 200px; line-height: 1.7;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
     }
-    .form-group textarea::placeholder { color: #b0bec5; }
+    .form-group textarea::placeholder { color: var(--faint); }
+    .field-hint { font-size: 11.5px; color: var(--faint); margin-top: 2px; display: block; }
+
+    .api-link {
+      white-space: nowrap; font-size: 13px; font-weight: 500; color: #fff; border: none;
+      padding: 9px 15px; border-radius: 9px; text-decoration: none; cursor: pointer;
+      background: linear-gradient(120deg, var(--accent), var(--accent2)); transition: filter 0.18s ease; flex-shrink: 0;
+    }
+    .api-link:hover { filter: brightness(1.06); }
 
     /* File upload */
     .file-upload-area {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 28px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-      background: #fafbfc;
+      border: 2px dashed #c4c9d4; border-radius: 12px; padding: 30px 20px; text-align: center;
+      cursor: pointer; transition: all 0.2s ease; position: relative; background: rgba(255,255,255,0.55);
+      color: var(--muted);
     }
-    .file-upload-area:hover { border-color: var(--primary); background: #f5f7ff; }
-    .file-upload-area.dragover {
-      border-color: var(--primary);
-      background: #eff4ff;
-      box-shadow: 0 0 0 4px rgba(74,108,247,0.08);
-    }
-    .file-upload-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.45; }
-    .file-upload-text { font-size: 14px; color: var(--text-secondary); }
-    .file-upload-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .file-upload-area:hover { border-color: var(--accent); background: rgba(99,102,241,0.06); color: var(--accent); }
+    .file-upload-area.dragover { border-color: var(--accent); background: rgba(99,102,241,0.06); color: var(--accent); }
+    .file-upload-text { font-size: 15px; font-weight: 600; color: var(--text); }
+    .file-upload-hint { font-size: 12.5px; color: var(--faint); margin-top: 6px; }
     .file-upload-input { display: none; }
 
     .uploaded-file {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 12px;
-      padding: 10px 14px;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: var(--radius);
-      font-size: 13px;
+      display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 14px;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; font-size: 13px;
     }
     .uploaded-file .file-name { flex: 1; font-weight: 500; color: #166534; }
-    .uploaded-file .file-remove {
-      cursor: pointer; color: var(--danger); font-size: 13px;
-      user-select: none; padding: 2px 6px; border-radius: 4px;
-    }
+    .uploaded-file .file-remove { cursor: pointer; color: var(--err); font-size: 13px; user-select: none; padding: 2px 8px; border-radius: 6px; }
     .uploaded-file .file-remove:hover { background: #fee2e2; }
 
     /* Buttons */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 22px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: inherit; font-size: 14px; font-weight: 500; padding: 10px 20px; border-radius: 9px;
+      border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer;
+      transition: all 0.18s ease; white-space: nowrap;
     }
-    .btn:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-primary {
-      background: var(--primary); color: #fff; border-color: var(--primary);
-    }
-    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
-    .btn-primary:disabled {
-      background: #94a3b8; border-color: #94a3b8; cursor: not-allowed;
-    }
-    .btn-danger { color: var(--danger); border-color: var(--danger); }
-    .btn-danger:hover { background: var(--danger); color: #fff; }
-    .btn-block { width: 100%; justify-content: center; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary { border: none; color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent2)); }
+    .btn-primary:hover { color: #fff; filter: brightness(1.06); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+    .btn-danger { color: var(--err); border-color: rgba(220,38,38,0.4); }
+    .btn-danger:hover { background: var(--err); border-color: var(--err); color: #fff; }
+    .btn-block { flex: 1; }
 
     /* Action bar */
-    .action-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-      margin-top: 20px;
-    }
+    .action-bar { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 20px; }
 
     /* Result area */
-    .result-section { margin-top: 20px; }
+    .result-section { margin-top: 0; }
     .result-section.hidden { display: none; }
 
-    .phase-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      margin-bottom: 16px;
-      overflow: hidden;
-    }
-    .phase-header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 14px 20px; border-bottom: 1px solid var(--border);
-      background: #fafbfc;
-    }
-    .phase-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
-    }
+    .phase-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; }
+    .phase-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); background: #fafbfc; font-size: 13px; color: var(--muted); }
+    .phase-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; }
     .phase-badge.typo { background: #fef3c7; color: #92400e; }
-    .phase-badge.logic { background: #dbeafe; color: #1e40af; }
-    .phase-status {
-      margin-left: auto; font-size: 12px; color: var(--text-secondary);
-    }
-    .phase-status.loading { color: var(--primary); }
-    .phase-status.done { color: var(--success); }
-    .phase-status.error { color: var(--danger); }
-
-    .phase-body { padding: 16px 20px; }
+    .phase-badge.logic { background: #ede9fe; color: #5b21b6; }
+    .phase-status { margin-left: auto; font-size: 12px; color: var(--muted); }
+    .phase-status.loading { color: var(--accent); }
+    .phase-status.done { color: var(--ok); }
+    .phase-status.error { color: var(--err); }
+    .phase-body { padding: 16px 18px; }
 
     .issue-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-    .issue-item {
-      display: flex; gap: 12px; padding: 12px 14px;
-      border: 1px solid var(--border); border-radius: var(--radius);
-      transition: background 0.12s;
-    }
+    .issue-item { display: flex; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; transition: background 0.12s ease; }
     .issue-item:hover { background: #f8fafc; }
-    .issue-severity {
-      width: 6px; height: auto; border-radius: 3px; flex-shrink: 0;
-    }
-    .issue-severity.high { background: var(--danger); }
+    .issue-severity { width: 5px; height: auto; border-radius: 3px; flex-shrink: 0; }
+    .issue-severity.high { background: var(--err); }
     .issue-severity.medium { background: var(--warning); }
-    .issue-severity.low { background: #93c5fd; }
-    .issue-content { flex: 1; }
-    .issue-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-    .issue-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .issue-severity.low { background: #a5b4fc; }
+    .issue-content { flex: 1; min-width: 0; }
+    .issue-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .issue-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
     .issue-fix {
-      display: inline-flex; align-items: center; gap: 4px;
-      margin-top: 6px; padding: 4px 10px;
-      background: #f0fdf4; border: 1px solid #bbf7d0;
-      border-radius: 6px; font-size: 12px; color: #166534;
+      display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; padding: 5px 11px;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 12px; color: #166534;
     }
-
-    .issue-location {
-      font-size: 12px; color: var(--primary); margin-bottom: 2px;
-    }
-
+    .issue-location { font-size: 12px; color: var(--accent); margin-bottom: 3px; }
     .issue-original-text {
-      font-size: 12.5px; line-height: 1.5; margin-top: 6px; padding: 8px 10px;
-      background: #fef2f2; border: 1px solid #fecaca; border-left: 3px solid var(--danger);
-      border-radius: 4px; color: #991b1b; word-break: break-all;
+      font-size: 12.5px; line-height: 1.5; margin-top: 8px; padding: 8px 10px;
+      background: #fef2f2; border: 1px solid #fecaca; border-left: 3px solid var(--err);
+      border-radius: 8px; color: #991b1b; word-break: break-all;
     }
 
-    .no-issue { text-align: center; color: var(--success); font-size: 14px; padding: 20px 0; }
-    .no-issue .icon { font-size: 32px; margin-bottom: 6px; opacity: 0.6; }
+    .no-issue { text-align: center; color: var(--ok); font-size: 14px; padding: 20px 0; }
+    .no-issue .icon { font-size: 30px; margin-bottom: 6px; opacity: 0.6; }
 
     /* Loading spinner */
-    .spinner {
-      display: inline-block; width: 16px; height: 16px;
-      border: 2px solid currentColor; border-top-color: transparent;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
+    .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #e2e5ec; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: -2px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar-thumb { background: #d6dae2; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #b8bdc8; }
 
     /* Toast */
     .toast {
-      position: fixed; top: 70px; left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: #1e293b; color: #fff; padding: 10px 20px;
-      border-radius: var(--radius); font-size: 14px; z-index: 9999;
-      pointer-events: none; opacity: 0; transition: all 0.25s;
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(22,24,29,0.92); color: #fff; padding: 10px 20px; border-radius: 999px;
+      font-size: 13px; z-index: 9999; pointer-events: none; opacity: 0; transition: all 0.3s ease;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* Summary bar */
-    .summary-bar {
-      display: flex; gap: 20px; margin-bottom: 16px;
-      flex-wrap: wrap;
+    .summary-bar { display: flex; gap: 22px; margin-bottom: 18px; flex-wrap: wrap; }
+    .summary-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+    .summary-item strong { color: var(--text); font-size: 17px; font-variant-numeric: tabular-nums; }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 14px 18px; }
+      .app-body { padding: 18px 16px 40px; }
+      .card { padding: 18px 16px; }
+      .action-bar { flex-wrap: wrap; }
     }
-    .summary-item {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 13px; color: var(--text-secondary);
-    }
-    .summary-item strong { color: var(--text); font-size: 16px; }
   </style>
 </head>
 <body>
 
-<div class="app-header">
-  <h1>文档智能校验</h1>
-  <span class="header-hint">AI 驱动的文档质量检查工具</span>
-</div>
+<header class="topbar">
+  <a class="back" href="https://maodeng.xkloj.online">← 猫凳系统</a>
+  <div class="title-wrap">
+    <h1>文档智能校验</h1>
+    <p>文档内容智能校验</p>
+  </div>
+</header>
 
 <div class="app-body">
 
   <!-- API 配置 -->
   <div class="card">
-    <div class="card-title"><span class="icon">🔑</span>API 配置 · 智谱 AI</div>
+    <div class="card-title">API 配置 · 智谱 AI</div>
     <div class="form-group" style="max-width:480px">
       <label>API Key（从 open.bigmodel.cn 获取）</label>
       <div style="display:flex;align-items:center;gap:8px">
         <input type="text" id="apiKey" placeholder="请输入智谱 AI 的 API Key" value="" style="flex:1">
         <a href="https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys" target="_blank" class="api-link">获取 Key</a>
       </div>
-      <span style="font-size:11px;color:var(--text-secondary);margin-top:2px;display:block;">使用智谱 GLM-4-Flash 模型进行文档校验分析</span>
+      <span class="field-hint">使用智谱 GLM-4-Flash 模型进行文档校验分析</span>
     </div>
   </div>
 
   <!-- 内容输入 -->
   <div class="card">
-    <div class="card-title"><span class="icon">📄</span>待检查内容</div>
+    <div class="card-title">待检查内容</div>
 
     <!-- 文件上传区 -->
     <div class="file-upload-area" id="dropArea" onclick="document.getElementById('fileInput').click()">
-      <div class="file-upload-icon">📁</div>
       <div class="file-upload-text">点击或拖拽文件到此处上传</div>
       <div class="file-upload-hint">支持 Word (.docx)、PPT (.pptx)、PDF (.pdf)</div>
       <input type="file" id="fileInput" class="file-upload-input"
@@ -354,7 +227,7 @@
 
     <div class="action-bar">
       <button class="btn btn-primary btn-block" id="checkBtn" onclick="startCheck()">
-        🔍 开始检查
+        开始检查
       </button>
       <button class="btn btn-danger" onclick="clearAll()">清空</button>
     </div>
@@ -363,31 +236,31 @@
   <!-- 检查结果 -->
   <div class="result-section hidden" id="resultSection">
     <div class="card">
-      <div class="card-title"><span class="icon">📊</span>检查结果</div>
+      <div class="card-title">检查结果</div>
 
       <div class="summary-bar" id="summaryBar"></div>
 
       <!-- 阶段一：基础校验 -->
       <div class="phase-card">
         <div class="phase-header">
-          <span class="phase-badge typo">🔤 基础校验</span>
+          <span class="phase-badge typo">基础校验</span>
           <span>语法 · 错别字 · 标点 · 格式</span>
           <span class="phase-status" id="phase1Status"></span>
         </div>
         <div class="phase-body" id="phase1Body">
-          <p style="color:#94a3b8;font-size:13px;">等待开始...</p>
+          <p style="color:var(--faint);font-size:13px;">等待开始...</p>
         </div>
       </div>
 
       <!-- 阶段二：逻辑分析 -->
       <div class="phase-card">
         <div class="phase-header">
-          <span class="phase-badge logic">🧠 深度分析</span>
+          <span class="phase-badge logic">深度分析</span>
           <span>逻辑错误 · 前后矛盾 · 事实核查</span>
           <span class="phase-status" id="phase2Status"></span>
         </div>
         <div class="phase-body" id="phase2Body">
-          <p style="color:#94a3b8;font-size:13px;">等待阶段一完成...</p>
+          <p style="color:var(--faint);font-size:13px;">等待阶段一完成...</p>
         </div>
       </div>
     </div>
@@ -446,7 +319,6 @@ async function handleFile(file) {
   uploadedFile = file;
   document.getElementById('uploadedFileInfo').innerHTML =
     `<div class="uploaded-file">
-       <span>📎</span>
        <span class="file-name">${escHtml(file.name)} (${formatSize(file.size)})</span>
        <span class="file-remove" onclick="removeFile(event)">移除</span>
      </div>`;
@@ -490,17 +362,18 @@ function formatSize(bytes) {
 
 // ===== 文件解析 =====
 
-// PDF 解析（使用 pdf.js 或简单提示）
+// PDF 解析（使用 pdf.js）
 async function parsePDF(file) {
-  // 尝试使用 FileReader + 简单文本提取
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async function() {
       try {
-        // 使用 pdf.js 解析
+        console.log('pdfjsLib available:', typeof pdfjsLib);
         if (typeof pdfjsLib !== 'undefined') {
           const data = new Uint8Array(reader.result);
+          console.log('PDF data size:', data.length, 'bytes');
           const pdf = await pdfjsLib.getDocument({data}).promise;
+          console.log('PDF pages:', pdf.numPages);
           let fullText = '';
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
@@ -509,13 +382,14 @@ async function parsePDF(file) {
           }
           resolve(fullText);
         } else {
-          // fallback: 基于 ArrayBuffer 的简单方式
-          reject(new Error('PDF 解析库未加载，请手动粘贴内容'));
+          reject(new Error('PDF 解析库未加载，请刷新页面重试'));
         }
       } catch(e) {
-        reject(new Error('PDF 解析失败，请手动粘贴内容'));
+        console.error('PDF parse error detail:', e.message, e.stack);
+        reject(new Error('PDF 解析失败: ' + e.message));
       }
     };
+    reader.onerror = () => reject(new Error('读取文件失败'));
     reader.readAsArrayBuffer(file);
   });
 }
@@ -526,12 +400,15 @@ async function parseDocx(file) {
     const reader = new FileReader();
     reader.onload = async function() {
       try {
+        console.log('JSZip available:', typeof JSZip);
         if (typeof JSZip === 'undefined') {
-          reject(new Error('JSZip 未加载，请手动粘贴内容'));
+          reject(new Error('JSZip 库未加载，请刷新页面重试'));
           return;
         }
         const zip = await JSZip.loadAsync(reader.result);
+        console.log('DOCX zip files:', Object.keys(zip.files));
         const xml = await zip.file('word/document.xml').async('string');
+        if (!xml) { reject(new Error('Word 文档格式异常：找不到 document.xml')); return; }
         const parser = new DOMParser();
         const doc = parser.parseFromString(xml, 'application/xml');
         const texts = doc.getElementsByTagName('w:t');
@@ -541,9 +418,11 @@ async function parseDocx(file) {
         }
         resolve(result || '(未能提取文本)');
       } catch(e) {
-        reject(new Error('Word 文档解析失败'));
+        console.error('DOCX parse error detail:', e.message, e.stack);
+        reject(new Error('Word 文档解析失败: ' + e.message));
       }
     };
+    reader.onerror = () => reject(new Error('读取文件失败'));
     reader.readAsArrayBuffer(file);
   });
 }
@@ -554,12 +433,14 @@ async function parsePptx(file) {
     const reader = new FileReader();
     reader.onload = async function() {
       try {
+        console.log('JSZip available:', typeof JSZip);
         if (typeof JSZip === 'undefined') {
-          reject(new Error('JSZip 未加载，请手动粘贴内容'));
+          reject(new Error('JSZip 库未加载，请刷新页面重试'));
           return;
         }
         const zip = await JSZip.loadAsync(reader.result);
         const slides = zip.file(/ppt\/slides\/slide\d+\.xml$/);
+        if (!slides || slides.length === 0) { reject(new Error('PPT 文档格式异常：找不到幻灯片')); return; }
         let result = '';
         for (const slideFile of slides.sort((a, b) => {
           const na = a.name.match(/\d+/)[0]; const nb = b.name.match(/\d+/)[0];
@@ -574,9 +455,11 @@ async function parsePptx(file) {
         }
         resolve(result.trim() || '(未能提取文本)');
       } catch(e) {
-        reject(new Error('PPT 文档解析失败'));
+        console.error('PPTX parse error detail:', e.message, e.stack);
+        reject(new Error('PPT 文档解析失败: ' + e.message));
       }
     };
+    reader.onerror = () => reject(new Error('读取文件失败'));
     reader.readAsArrayBuffer(file);
   });
 }
@@ -658,7 +541,7 @@ async function startCheck() {
   }
 
   btn.disabled = false;
-  btn.innerHTML = '🔍 开始检查';
+  btn.innerHTML = '开始检查';
 }
 
 async function runPhase1(text) {
@@ -764,7 +647,7 @@ function renderIssues(containerId, issues) {
   const container = document.getElementById(containerId);
   if (!issues || issues.length === 0) {
     container.innerHTML =
-      `<div class="no-issue"><div class="icon">✅</div><div>未发现问题，内容质量良好</div></div>`;
+      `<div class="no-issue"><div>未发现问题，内容质量良好</div></div>`;
     return;
   }
 
@@ -781,12 +664,12 @@ function renderIssues(containerId, issues) {
     html += `<li class="issue-item">
       <div class="issue-severity ${sevClass}"></div>
       <div class="issue-content">
-        <div class="issue-title">${escHtml(issue.title || '')} <small style="color:var(--text-secondary);font-weight:normal;">[${sevLabel}]</small></div>
-        ${locText ? `<div class="issue-location">📍 ${escHtml(locText)}</div>` : ''}
+        <div class="issue-title">${escHtml(issue.title || '')} <small style="color:var(--muted);font-weight:normal;">[${sevLabel}]</small></div>
+        ${locText ? `<div class="issue-location">定位：${escHtml(locText)}</div>` : ''}
         <div class="issue-desc">${escHtml(issue.description || '')}</div>`
         // 高亮显示有问题的原文
-        + (origText ? `<div class="issue-original-text">📝 有问题原文：${escHtml(origText)}</div>` : '')
-        + (issue.suggestion ? `<div class="issue-fix">💡 建议：${escHtml(issue.suggestion)}</div>` : '')
+        + (origText ? `<div class="issue-original-text">有问题原文：${escHtml(origText)}</div>` : '')
+        + (issue.suggestion ? `<div class="issue-fix">建议：${escHtml(issue.suggestion)}</div>` : '')
       + `</div></li>`;
   });
   html += '</ul>';
@@ -799,8 +682,8 @@ function renderSummary(typoCount, logicCount) {
   bar.innerHTML = `
     <div class="summary-item"><strong>${total}</strong> 个问题总计</div>
     <div class="summary-item" style="color:#92400e"><strong>${typoCount}</strong> 基础问题</div>
-    <div class="summary-item" style="color:#1e40af"><strong>${logicCount}</strong> 逻辑问题</div>
-    ${total === 0 ? '<div class="summary-item" style="color:var(--success)">🎉 文档质量优秀！</div>' : ''}
+    <div class="summary-item" style="color:#5b21b6"><strong>${logicCount}</strong> 逻辑问题</div>
+    ${total === 0 ? '<div class="summary-item" style="color:var(--ok)">文档质量优秀！</div>' : ''}
   `;
 }
 
