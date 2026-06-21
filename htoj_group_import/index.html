@@ -40,6 +40,17 @@
     .spacer { flex: 1; }
 
     .app { display: flex; gap: 20px; align-items: stretch; max-width: 1440px; margin: 0 auto; padding: 22px 24px 40px; }
+    .left-panel, .right-panel, .panel-card, .preview-card, .panel-content, .table-wrapper { min-height: 0; }
+
+    /* 桌面端：撑满视口、内部滚动，操作按钮始终固定可见 */
+    @media (min-width: 961px) {
+      html, body { height: 100%; }
+      body { display: flex; flex-direction: column; overflow: hidden; }
+      .topbar { flex-shrink: 0; }
+      .app { flex: 1; min-height: 0; overflow: hidden; width: 100%; }
+      .panel-content .form-group { flex: 1; min-height: 0; }
+      .panel-content textarea { flex: 1; min-height: 120px; }
+    }
 
     /* 左侧输入面板（保留 .left-panel，供拖拽改宽脚本使用） */
     .left-panel {
@@ -75,6 +86,7 @@
     .action-bar {
       padding: 14px 16px; border-top: 1px solid var(--border);
       display: flex; gap: 10px; align-items: center;
+      background: var(--card); box-shadow: 0 -6px 16px rgba(17, 24, 39, 0.05);
     }
     .action-bar .btn { flex: 1; justify-content: center; }
 
@@ -163,6 +175,15 @@
       .left-panel { width: 100% !important; max-width: none; }
       .panel-resizer { display: none; }
       textarea { min-height: 180px; }
+      /* 移动端：操作按钮浮动固定在屏幕底部，滚动几千行也始终可点 */
+      .action-bar {
+        position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 30;
+        border: 1px solid var(--border); border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 8px 28px rgba(17, 24, 39, 0.18);
+      }
+      body { padding-bottom: 88px; }
     }
   </style>
 </head>
