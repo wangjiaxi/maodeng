@@ -637,21 +637,13 @@
   <!-- Right Panel: Preview -->
   <div class="right-panel">
     <div class="save-bar">
-      <div class="canvas-bg-option">
-        <label>背景:</label>
-        <input type="color" id="canvasBgColor" value="#ffffff" onchange="updateCanvasBg()">
-      </div>
-      <div class="canvas-width-control">
-        <label>宽度:</label>
-        <input type="number" id="canvasWidthInput" value="1000" min="200" max="3000" step="10" onchange="updateCanvasSize()">
-        <span>px</span>
-      </div>
       <div class="canvas-width-control">
         <label>高度:</label>
         <input type="number" id="canvasHeightInput" value="" min="100" max="5000" step="10" placeholder="自适应" onchange="updateCanvasHeight()">
         <span>px</span>
       </div>
       <button class="btn btn-sm" onclick="autoFitHeight()" title="根据内容自动调整高度">自适应高度</button>
+      <span class="header-hint">固定 1000px 宽 · 纯白背景</span>
       <button class="btn btn-sm" onclick="stashCanvas()" title="暂存当前画布到剪贴板">暂存</button>
       <button class="btn btn-primary" onclick="saveToImage()">
         保存到本地
@@ -1055,18 +1047,7 @@ function renderCanvas() {
   }
 }
 
-// --- Canvas bg & size ---
-
-function updateCanvasBg() {
-  const color = document.getElementById('canvasBgColor').value;
-  document.getElementById('canvas').style.background = color;
-}
-
-function updateCanvasSize() {
-  const w = parseInt(document.getElementById('canvasWidthInput').value) || 1000;
-  document.getElementById('canvas').style.width = w + 'px';
-  renderCanvas();
-}
+// --- Image scale ---
 
 function updateImageScale(id, val) {
   const el = elements.find(e => e.id === id);
@@ -1123,8 +1104,8 @@ async function stashCanvas() {
     const c = await html2canvas(canvas, {
       scale: 1,
       useCORS: true,
-      backgroundColor: document.getElementById('canvasBgColor').value,
-      width: canvas.scrollWidth,
+      backgroundColor: '#ffffff',
+      width: 1000,
       height: canvas.scrollHeight
     });
     canvas.classList.remove('capturing');
@@ -1334,8 +1315,8 @@ async function saveToImage() {
     const c = await html2canvas(canvas, {
       scale: 1,
       useCORS: true,
-      backgroundColor: document.getElementById('canvasBgColor').value,
-      width: canvas.scrollWidth,
+      backgroundColor: '#ffffff',
+      width: 1000,
       height: canvas.scrollHeight
     });
     canvas.classList.remove('capturing');
