@@ -652,10 +652,6 @@
         <span>px</span>
       </div>
       <button class="btn btn-sm" onclick="autoFitHeight()" title="根据内容自动调整高度">自适应高度</button>
-      <label class="canvas-bg-option" style="cursor:pointer;gap:6px;" title="导出为带投影、透明背景的 PNG">
-        <input type="checkbox" id="exportShadow" checked style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent);">
-        导出阴影
-      </label>
       <button class="btn btn-sm" onclick="stashCanvas()" title="暂存当前画布到剪贴板">暂存</button>
       <button class="btn btn-primary" onclick="saveToImage()">
         保存到本地
@@ -1116,47 +1112,22 @@ function autoFitHeight() {
 let stashItems = [];
 let stashNextId = 1;
 
-// 统一截图：勾选「导出阴影」时，导出为透明背景 + 卡片投影的 PNG
-async function captureCanvas() {
+async function stashCanvas() {
   const prevSelected = selectedId;
   selectedId = null;
   renderCanvas();
 
   const canvas = document.getElementById('canvas');
-  const withShadow = document.getElementById('exportShadow').checked;
-  const bg = document.getElementById('canvasBgColor').value;
   canvas.classList.add('capturing');
   try {
-    const card = await html2canvas(canvas, {
+    const c = await html2canvas(canvas, {
       scale: 1,
       useCORS: true,
-      backgroundColor: withShadow ? null : bg,
+      backgroundColor: document.getElementById('canvasBgColor').value,
       width: canvas.scrollWidth,
       height: canvas.scrollHeight
     });
-    if (!withShadow) return card;
-    // 在更大的透明画布上重绘卡片，用 Canvas 原生投影画出阴影（不依赖 html2canvas 的 box-shadow）
-    const PAD = 56;
-    const out = document.createElement('canvas');
-    out.width = card.width + PAD * 2;
-    out.height = card.height + PAD * 2;
-    const ctx = out.getContext('2d');
-    ctx.shadowColor = 'rgba(17, 24, 39, 0.28)';
-    ctx.shadowBlur = 34;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 14;
-    ctx.drawImage(card, PAD, PAD);
-    return out;
-  } finally {
     canvas.classList.remove('capturing');
-    selectedId = prevSelected;
-    renderCanvas();
-  }
-}
-
-async function stashCanvas() {
-  try {
-    const c = await captureCanvas();
     stashItems.push({
       id: stashNextId++,
       dataUrl: c.toDataURL('image/png'),
@@ -1165,9 +1136,13 @@ async function stashCanvas() {
     renderStash();
     showToast('已暂存到剪贴板');
   } catch (err) {
+    canvas.classList.remove('capturing');
     console.error(err);
     showToast('暂存失败');
   }
+
+  selectedId = prevSelected;
+  renderCanvas();
 }
 
 function renderStash() {
@@ -1348,14 +1323,30 @@ function downloadAllStash() {
 // --- Save to image ---
 
 async function saveToImage() {
+  // Deselect all elements to remove outlines
+  selectedId = null;
+  renderCanvas();
+
+  const canvas = document.getElementById('canvas');
+  canvas.classList.add('capturing');
+
   try {
-    const c = await captureCanvas();
+    const c = await html2canvas(canvas, {
+      scale: 1,
+      useCORS: true,
+      backgroundColor: document.getElementById('canvasBgColor').value,
+      width: canvas.scrollWidth,
+      height: canvas.scrollHeight
+    });
+    canvas.classList.remove('capturing');
+
     const link = document.createElement('a');
     link.download = `morton_${Date.now()}.png`;
     link.href = c.toDataURL('image/png');
     link.click();
     showToast('图片已保存');
   } catch (err) {
+    canvas.classList.remove('capturing');
     console.error(err);
     showToast('保存失败，请重试');
   }
