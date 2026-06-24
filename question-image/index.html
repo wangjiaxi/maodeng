@@ -1093,6 +1093,18 @@ function autoFitHeight() {
 let stashItems = [];
 let stashNextId = 1;
 
+// 保证导出为不透明纯白底：把截图重绘到预先填白的画布上（杜绝任何透明 → 看图器显示为灰）
+function flattenWhite(srcCanvas) {
+  const out = document.createElement('canvas');
+  out.width = srcCanvas.width;
+  out.height = srcCanvas.height;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(srcCanvas, 0, 0);
+  return out;
+}
+
 async function stashCanvas() {
   const prevSelected = selectedId;
   selectedId = null;
@@ -1111,7 +1123,7 @@ async function stashCanvas() {
     canvas.classList.remove('capturing');
     stashItems.push({
       id: stashNextId++,
-      dataUrl: c.toDataURL('image/png'),
+      dataUrl: flattenWhite(c).toDataURL('image/png'),
       time: new Date().toLocaleTimeString()
     });
     renderStash();
@@ -1323,7 +1335,7 @@ async function saveToImage() {
 
     const link = document.createElement('a');
     link.download = `morton_${Date.now()}.png`;
-    link.href = c.toDataURL('image/png');
+    link.href = flattenWhite(c).toDataURL('image/png');
     link.click();
     showToast('图片已保存');
   } catch (err) {
