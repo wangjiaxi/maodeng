@@ -60,93 +60,86 @@
     }
 
     :root {
-      --bg: #f6f7fb;
-      --card: #ffffff;
+      --primary: #4a6cf7;
+      --primary-hover: #3b5de7;
+      --danger: #e74c3c;
+      --danger-hover: #c0392b;
+      --success: #27ae60;
+      --bg: #f0f2f5;
       --card-bg: #ffffff;
-      --border: rgba(17, 24, 39, 0.09);
-      --text: #16181d;
-      --muted: #6b7280;
-      --text-secondary: #6b7280;
-      --faint: #9ca3af;
-      --accent: #6366f1;
-      --accent2: #9333ea;
-      --primary: #6366f1;
-      --danger: #dc2626;
-      --success: #16a34a;
-      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
-      --radius: 10px;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --text-secondary: #64748b;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
     }
 
-    /* ===== Topbar ===== */
-    .topbar {
-      display: flex; align-items: center; gap: 16px; padding: 16px 28px;
+    .app-header {
+      background: var(--card-bg);
       border-bottom: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      position: sticky; top: 0; z-index: 100;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    .back {
-      flex-shrink: 0; font-size: 13px; color: var(--muted); text-decoration: none;
-      padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); transition: all 0.2s ease;
-    }
-    .back:hover { color: var(--text); border-color: var(--accent); }
-    .title-wrap h1 {
-      font-size: 21px; font-weight: 800; letter-spacing: 1px;
-      background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
-    .header-hint { font-size: 12.5px; color: var(--muted); }
 
-    /* ===== Layout ===== */
+    .app-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .header-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
     .app-layout {
       display: flex;
-      gap: 18px;
-      align-items: stretch;
-      max-width: 1480px;
-      margin: 0 auto;
-      padding: 20px 24px 36px;
-      min-height: calc(100vh - 59px);
+      height: calc(100vh - 53px);
+      overflow: hidden;
     }
 
-    /* Left Panel (controls) */
+    /* Left Panel */
     .left-panel {
       width: 360px;
       min-width: 240px;
       max-width: 600px;
-      flex-shrink: 0;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      align-self: flex-start;
-      position: sticky;
-      top: 79px;
-      max-height: calc(100vh - 99px);
     }
 
     /* Resizer handle */
     .panel-resizer {
-      width: 10px;
+      width: 6px;
       cursor: col-resize;
       background: transparent;
       position: relative;
       flex-shrink: 0;
       z-index: 10;
-      align-self: stretch;
+      transition: background 0.15s;
+    }
+    .panel-resizer:hover,
+    .panel-resizer.active {
+      background: var(--primary);
+      opacity: 0.4;
     }
     .panel-resizer::after {
       content: '';
@@ -154,338 +147,298 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 3px;
-      height: 36px;
-      background: #d3d7e0;
-      border-radius: 3px;
+      width: 2px;
+      height: 30px;
+      background: #cbd5e1;
+      border-radius: 1px;
       transition: background 0.15s;
     }
     .panel-resizer:hover::after,
     .panel-resizer.active::after {
-      background: var(--accent);
+      background: var(--primary);
     }
 
     .panel-toolbar {
-      padding: 14px 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
-      align-items: center;
-      gap: 9px;
-      background: #fbfbfd;
+      gap: 8px;
+      background: #fafbfc;
     }
 
-    /* ===== Buttons ===== */
     .btn {
-      font-family: inherit;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
+      gap: 4px;
+      padding: 7px 14px;
       border: 1px solid var(--border);
-      border-radius: 9px;
-      background: #fff;
+      border-radius: var(--radius);
+      background: var(--card-bg);
       color: var(--text);
       font-size: 13px;
-      font-weight: 500;
       cursor: pointer;
-      transition: all 0.18s ease;
+      transition: all 0.15s;
       white-space: nowrap;
     }
-    .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn:hover { border-color: var(--primary); color: var(--primary); }
 
     .btn-primary {
-      border: none;
+      background: var(--primary);
       color: #fff;
-      background: linear-gradient(120deg, var(--accent), var(--accent2));
+      border-color: var(--primary);
     }
-    .btn-primary:hover { color: #fff; filter: brightness(1.06); border: none; }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 
     .btn-sm {
-      padding: 6px 11px;
-      font-size: 12.5px;
+      padding: 4px 10px;
+      font-size: 12px;
     }
 
-    .btn-danger { color: var(--danger); border-color: var(--border); background: #fff; }
-    .btn-danger:hover { background: #fef2f2; color: var(--danger); border-color: var(--danger); }
+    .btn-danger { color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
 
     .element-list {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: 8px;
     }
 
     .element-item {
       border: 1px solid var(--border);
-      border-radius: 11px;
-      margin-bottom: 10px;
-      background: #fff;
-      transition: box-shadow 0.18s, border-color 0.18s;
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      background: var(--card-bg);
+      transition: box-shadow 0.15s;
     }
-    .element-item:hover { box-shadow: var(--shadow); border-color: rgba(99,102,241,0.3); }
+
+    .element-item:hover { box-shadow: var(--shadow-md); }
 
     .element-item-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 11px 13px;
+      padding: 8px 12px;
       cursor: pointer;
       user-select: none;
       border-bottom: 1px solid transparent;
     }
+
     .element-item-header.expanded {
       border-bottom-color: var(--border);
     }
+
     .element-item-header .label {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
     }
+
     .element-item-header .label .tag {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
       font-size: 11px;
-      font-weight: 700;
       color: #fff;
     }
-    .tag-text { background: linear-gradient(120deg, var(--accent), var(--accent2)); }
-    .tag-image { background: linear-gradient(120deg, #16a34a, #0d9488); }
+
+    .tag-text { background: var(--primary); }
+    .tag-image { background: var(--success); }
 
     .element-item-header .arrow {
       transition: transform 0.2s;
-      color: var(--faint);
-      font-size: 11px;
+      color: var(--text-secondary);
+      font-size: 12px;
     }
+
     .element-item-header.expanded .arrow { transform: rotate(180deg); }
 
     .element-item-body {
-      padding: 0 13px;
+      padding: 0 12px;
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.25s ease, padding 0.25s ease;
     }
+
     .element-item-body.expanded {
-      max-height: 640px;
-      padding: 13px;
+      max-height: 600px;
+      padding: 12px;
     }
 
     .form-row {
       display: flex;
-      gap: 9px;
-      margin-bottom: 11px;
+      gap: 8px;
+      margin-bottom: 10px;
       align-items: center;
     }
+
     .form-group {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      min-width: 0;
+      gap: 3px;
     }
+
     .form-group label {
       font-size: 12px;
-      color: var(--muted);
+      color: var(--text-secondary);
       font-weight: 500;
     }
+
     .form-group input[type="number"],
     .form-group input[type="text"],
     .form-group textarea {
-      font-family: inherit;
-      padding: 7px 9px;
+      padding: 6px 8px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 5px;
       font-size: 13px;
-      color: var(--text);
-      background: #fff;
       outline: none;
       transition: border-color 0.15s;
       width: 100%;
     }
+
     .form-group input:focus,
     .form-group textarea:focus {
-      border-color: var(--accent);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
     }
+
     .form-group textarea {
       resize: vertical;
-      min-height: 64px;
-      line-height: 1.6;
-      font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+      min-height: 60px;
+      font-family: inherit;
     }
 
     .color-input-wrap {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
     }
+
     .color-input-wrap input[type="color"] {
-      -webkit-appearance: none; appearance: none;
-      width: 32px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 0;
+      border-radius: 4px;
+      padding: 2px;
       cursor: pointer;
       background: none;
-      flex-shrink: 0;
     }
-    .color-input-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
-    .color-input-wrap input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+
     .color-input-wrap input[type="text"] {
       flex: 1;
-      min-width: 0;
     }
 
     .img-preview-thumb {
-      margin-top: 8px;
+      margin-top: 6px;
       max-width: 100%;
-      max-height: 90px;
+      max-height: 80px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 4px;
       object-fit: contain;
     }
 
-    /* select in left panel */
-    .form-group select {
-      font-family: inherit;
-      font-size: 13px;
-      color: var(--text);
-      padding: 7px 9px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      outline: none;
-      cursor: pointer;
-      width: 100%;
-    }
-    .form-group select:focus { border-color: var(--accent); }
-
-    /* ===== Right Panel (preview) ===== */
+    /* Right Panel */
     .right-panel {
       flex: 1;
-      min-width: 0;
       overflow: auto;
-      padding: 18px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
+      background: #e8ecf1;
     }
 
     .save-bar {
-      width: 100%;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       display: flex;
-      gap: 11px;
+      gap: 10px;
       align-items: center;
-      flex-wrap: wrap;
-      padding: 11px 13px;
-      background: #fbfbfd;
-      border: 1px solid var(--border);
-      border-radius: 12px;
     }
 
     .canvas-width-control {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       font-size: 13px;
-      color: var(--muted);
+      color: var(--text-secondary);
     }
+
     .canvas-width-control input {
-      font-family: inherit;
-      width: 78px;
-      padding: 6px 9px;
+      width: 70px;
+      padding: 5px 8px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 5px;
       font-size: 13px;
-      color: var(--text);
       text-align: center;
       outline: none;
-      background: #fff;
     }
-    .canvas-width-control input:focus { border-color: var(--accent); }
+
+    .canvas-width-control input:focus {
+      border-color: var(--primary);
+    }
 
     .preview-wrapper {
       padding: 0;
       display: inline-block;
-      max-width: 100%;
     }
 
     /* Stash (clipboard) area */
     .stash-section {
-      width: 100%;
-      margin-top: 16px;
-      padding-top: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
       border-top: 1px solid var(--border);
     }
     .stash-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      font-size: 14px;
+      margin-bottom: 10px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text);
     }
     .stash-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 11px;
-      max-height: 360px;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      max-height: 200px;
       overflow-y: auto;
       padding-right: 4px;
     }
     .stash-item {
       position: relative;
       border: 1px solid var(--border);
-      border-radius: 9px;
+      border-radius: 6px;
       overflow: hidden;
-      background: #fff;
-      transition: box-shadow 0.18s, border-color 0.18s;
+      background: var(--card-bg);
+      transition: box-shadow 0.15s;
     }
     .stash-item:hover {
-      box-shadow: var(--shadow);
-      border-color: rgba(99,102,241,0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     .stash-item img {
       width: 100%;
-      max-height: 160px;
-      object-fit: contain;
       display: block;
       cursor: pointer;
-      background: #f7f8fb;
-    }
-    .stash-item-num {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      padding: 0 8px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      border-right: 1px solid var(--border);
     }
     .stash-item-actions {
       display: flex;
       gap: 0;
-      background: #fff;
-      border-top: 1px solid var(--border);
+      background: var(--card-bg);
     }
     .stash-item-actions button {
       flex: 1;
-      padding: 6px 0;
+      padding: 4px 0;
       border: none;
       background: none;
       font-size: 12px;
-      color: var(--muted);
+      color: var(--text-secondary);
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
@@ -500,17 +453,15 @@
     .stash-empty {
       grid-column: 1 / -1;
       text-align: center;
-      color: var(--faint);
+      color: #94a3b8;
       font-size: 13px;
-      padding: 18px 0;
+      padding: 16px 0;
     }
 
     #canvas {
       background: #ffffff;
       position: relative;
       overflow: hidden;
-      border-radius: 8px;
-      box-shadow: 0 6px 20px rgba(17,24,39,0.12);
     }
 
     .canvas-element {
@@ -518,17 +469,17 @@
       cursor: move;
       user-select: none;
     }
+
     .canvas-element:hover {
-      outline: 2px dashed var(--accent);
+      outline: 2px dashed var(--primary);
       outline-offset: 1px;
     }
+
     .canvas-element.selected {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--primary);
       outline-offset: 1px;
     }
-    #canvas.capturing .resize-handle {
-      display: none !important;
-    }
+
     .canvas-element img {
       display: block;
       max-width: none;
@@ -541,34 +492,36 @@
       align-items: center;
       justify-content: center;
       height: 300px;
-      color: var(--muted);
+      color: var(--text-secondary);
       font-size: 14px;
-      gap: 10px;
+      gap: 8px;
     }
-    .empty-state .icon { font-size: 40px; opacity: 0.35; color: var(--accent); }
+
+    .empty-state .icon { font-size: 36px; opacity: 0.4; }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #d3d7e0; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #b6bcc9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     /* Toast */
     .toast {
       position: fixed;
-      bottom: 28px;
+      top: 70px;
       left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: rgba(22,24,29,0.92);
+      transform: translateX(-50%) translateY(-20px);
+      background: #1a202c;
       color: #fff;
       padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 13px;
+      border-radius: var(--radius);
+      font-size: 14px;
       opacity: 0;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
       z-index: 9999;
       pointer-events: none;
     }
+
     .toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
@@ -578,41 +531,21 @@
     .canvas-bg-option {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       font-size: 13px;
-      color: var(--muted);
+      color: var(--text-secondary);
     }
     .canvas-bg-option input[type="color"] {
-      -webkit-appearance: none; appearance: none;
-      width: 32px; height: 30px; border: 1px solid var(--border); border-radius: 7px; padding: 0; cursor: pointer; background: none;
-    }
-    .canvas-bg-option input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
-    .canvas-bg-option input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
-
-    /* Responsive: stack on narrow screens */
-    @media (max-width: 960px) {
-      .app-layout { flex-direction: column; min-height: 0; }
-      .left-panel { width: 100%; max-width: none; position: static; max-height: none; top: auto; }
-      .panel-resizer { display: none; }
-      .right-panel { width: 100%; }
-      .stash-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 520px) {
-      .topbar { padding: 14px 16px; gap: 12px; }
-      .app-layout { padding: 16px 14px 28px; }
-      .stash-grid { grid-template-columns: repeat(2, 1fr); }
+      width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 4px; padding: 2px; cursor: pointer; background: none;
     }
   </style>
 </head>
 <body>
 
-<header class="topbar">
-  <a class="back" href="../">← 猫凳系统</a>
-  <div class="title-wrap">
-    <h1>猫凳题目图片生成工具</h1>
-    <p>题目一键生成图片</p>
-  </div>
-</header>
+<div class="app-header">
+  <h1>猫凳题目图片生成工具</h1>
+  <span class="header-hint">添加文本和图片元素，拖拽调整位置，导出为图片</span>
+</div>
 
 <div class="app-layout">
   <!-- Left Panel: Editor Controls -->
@@ -637,13 +570,21 @@
   <!-- Right Panel: Preview -->
   <div class="right-panel">
     <div class="save-bar">
+      <div class="canvas-bg-option">
+        <label>背景:</label>
+        <input type="color" id="canvasBgColor" value="#ffffff" onchange="updateCanvasBg()">
+      </div>
+      <div class="canvas-width-control">
+        <label>宽度:</label>
+        <input type="number" id="canvasWidthInput" value="1000" min="200" max="3000" step="10" onchange="updateCanvasSize()">
+        <span>px</span>
+      </div>
       <div class="canvas-width-control">
         <label>高度:</label>
         <input type="number" id="canvasHeightInput" value="" min="100" max="5000" step="10" placeholder="自适应" onchange="updateCanvasHeight()">
         <span>px</span>
       </div>
       <button class="btn btn-sm" onclick="autoFitHeight()" title="根据内容自动调整高度">自适应高度</button>
-      <span class="header-hint">固定 1000px 宽 · 纯白背景</span>
       <button class="btn btn-sm" onclick="stashCanvas()" title="暂存当前画布到剪贴板">暂存</button>
       <button class="btn btn-primary" onclick="saveToImage()">
         保存到本地
@@ -655,11 +596,7 @@
     <div class="stash-section">
       <div class="stash-section-header">
         <span>剪贴板</span>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span id="stashCount" style="font-weight:normal;color:var(--text-secondary);font-size:12px;"></span>
-          <button class="btn btn-sm btn-primary" id="downloadAllBtn" onclick="downloadAllStash()" style="display:none;">打包下载</button>
-          <button class="btn btn-sm btn-danger" id="clearStashBtn" onclick="clearStash()" style="display:none;">清空</button>
-        </div>
+        <span id="stashCount" style="font-weight:normal;color:var(--text-secondary);font-size:12px;"></span>
       </div>
       <div class="stash-grid" id="stashGrid">
         <div class="stash-empty" id="stashEmpty">点击「暂存」保存当前画布快照</div>
@@ -746,13 +683,13 @@ function handleFileSelect(e) {
         el.src = ev.target.result;
         el.originalWidth = img.naturalWidth;
         el.originalHeight = img.naturalHeight;
-        el.scale = 50;
-        el.width = Math.round(img.naturalWidth * 50 / 100);
-        el.height = Math.round(img.naturalHeight * 50 / 100);
+        el.scale = 100;
+        el.width = img.naturalWidth;
+        el.height = img.naturalHeight;
       }
       pendingImageCallback = null;
       renderList();
-      autoFitHeight();
+      renderCanvas();
     };
     img.src = ev.target.result;
   };
@@ -1047,7 +984,18 @@ function renderCanvas() {
   }
 }
 
-// --- Image scale ---
+// --- Canvas bg & size ---
+
+function updateCanvasBg() {
+  const color = document.getElementById('canvasBgColor').value;
+  document.getElementById('canvas').style.background = color;
+}
+
+function updateCanvasSize() {
+  const w = parseInt(document.getElementById('canvasWidthInput').value) || 1000;
+  document.getElementById('canvas').style.width = w + 'px';
+  renderCanvas();
+}
 
 function updateImageScale(id, val) {
   const el = elements.find(e => e.id === id);
@@ -1093,43 +1041,28 @@ function autoFitHeight() {
 let stashItems = [];
 let stashNextId = 1;
 
-// 保证导出为不透明纯白底：把截图重绘到预先填白的画布上（杜绝任何透明 → 看图器显示为灰）
-function flattenWhite(srcCanvas) {
-  const out = document.createElement('canvas');
-  out.width = srcCanvas.width;
-  out.height = srcCanvas.height;
-  const ctx = out.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, out.width, out.height);
-  ctx.drawImage(srcCanvas, 0, 0);
-  return out;
-}
-
 async function stashCanvas() {
   const prevSelected = selectedId;
   selectedId = null;
   renderCanvas();
 
   const canvas = document.getElementById('canvas');
-  canvas.classList.add('capturing');
   try {
     const c = await html2canvas(canvas, {
       scale: 1,
       useCORS: true,
-      backgroundColor: '#ffffff',
-      width: 1000,
+      backgroundColor: document.getElementById('canvasBgColor').value,
+      width: canvas.scrollWidth,
       height: canvas.scrollHeight
     });
-    canvas.classList.remove('capturing');
     stashItems.push({
       id: stashNextId++,
-      dataUrl: flattenWhite(c).toDataURL('image/png'),
+      dataUrl: c.toDataURL('image/png'),
       time: new Date().toLocaleTimeString()
     });
     renderStash();
     showToast('已暂存到剪贴板');
   } catch (err) {
-    canvas.classList.remove('capturing');
     console.error(err);
     showToast('暂存失败');
   }
@@ -1141,26 +1074,18 @@ async function stashCanvas() {
 function renderStash() {
   const grid = document.getElementById('stashGrid');
   const count = document.getElementById('stashCount');
-  const downloadAllBtn = document.getElementById('downloadAllBtn');
-  const clearStashBtn = document.getElementById('clearStashBtn');
   if (stashItems.length === 0) {
     grid.innerHTML = '<div class="stash-empty">点击「暂存」保存当前画布快照</div>';
     count.textContent = '';
-    downloadAllBtn.style.display = 'none';
-    clearStashBtn.style.display = 'none';
     return;
   }
   count.textContent = stashItems.length + ' 项';
-  downloadAllBtn.style.display = '';
-  clearStashBtn.style.display = '';
   let html = '';
-  stashItems.forEach((item, idx) => {
-    const seq = idx + 1;
+  stashItems.forEach(item => {
     html += `<div class="stash-item">
-      <img src="${item.dataUrl}" title="${item.time} → ${seq}.png" onclick="downloadStash(${item.id})">
+      <img src="${item.dataUrl}" title="${item.time}" onclick="downloadStash(${item.id})">
       <div class="stash-item-actions">
-        <span class="stash-item-num">${seq}.png</span>
-        <button onclick="downloadStash(${item.id})" title="下载 ${seq}.png">下载</button>
+        <button onclick="downloadStash(${item.id})" title="下载">下载</button>
         <button class="stash-delete" onclick="removeStash(${item.id})" title="删除">删除</button>
       </div>
     </div>`;
@@ -1169,148 +1094,17 @@ function renderStash() {
 }
 
 function downloadStash(id) {
-  const idx = stashItems.findIndex(s => s.id === id);
-  if (idx < 0) return;
+  const item = stashItems.find(s => s.id === id);
+  if (!item) return;
   const link = document.createElement('a');
-  link.download = `${idx + 1}.png`;
-  link.href = stashItems[idx].dataUrl;
+  link.download = `morton_stash_${id}_${Date.now()}.png`;
+  link.href = item.dataUrl;
   link.click();
 }
 
 function removeStash(id) {
   stashItems = stashItems.filter(s => s.id !== id);
   renderStash();
-}
-
-function clearStash() {
-  if (stashItems.length === 0) return;
-  if (!confirm(`确定清空暂存区的 ${stashItems.length} 张图片吗？`)) return;
-  stashItems = [];
-  renderStash();
-  showToast('已清空暂存区');
-}
-
-// --- One-click package download (ZIP, store/no-compression) ---
-
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) {
-      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    }
-    table[n] = c >>> 0;
-  }
-  return table;
-})();
-
-function crc32(bytes) {
-  let crc = -1;
-  for (let i = 0; i < bytes.length; i++) {
-    crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
-  }
-  return (crc ^ -1) >>> 0;
-}
-
-function dataUrlToBytes(dataUrl) {
-  const binary = atob(dataUrl.split(',')[1]);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-// Build a valid .zip Blob from [{name, data:Uint8Array}] using the store method.
-function buildZip(files) {
-  const encoder = new TextEncoder();
-  const chunks = [];
-  const central = [];
-  let offset = 0;
-
-  files.forEach(file => {
-    const nameBytes = encoder.encode(file.name);
-    const data = file.data;
-    const crc = crc32(data);
-    const size = data.length;
-
-    const header = new DataView(new ArrayBuffer(30));
-    header.setUint32(0, 0x04034b50, true);   // local file header signature
-    header.setUint16(4, 20, true);            // version needed
-    header.setUint16(6, 0, true);             // flags
-    header.setUint16(8, 0, true);             // compression: store
-    header.setUint16(10, 0, true);            // mod time
-    header.setUint16(12, 0, true);            // mod date
-    header.setUint32(14, crc, true);          // crc32
-    header.setUint32(18, size, true);         // compressed size
-    header.setUint32(22, size, true);         // uncompressed size
-    header.setUint16(26, nameBytes.length, true); // name length
-    header.setUint16(28, 0, true);            // extra length
-    chunks.push(new Uint8Array(header.buffer), nameBytes, data);
-
-    const cd = new DataView(new ArrayBuffer(46));
-    cd.setUint32(0, 0x02014b50, true);        // central dir signature
-    cd.setUint16(4, 20, true);                // version made by
-    cd.setUint16(6, 20, true);                // version needed
-    cd.setUint16(8, 0, true);                 // flags
-    cd.setUint16(10, 0, true);                // compression: store
-    cd.setUint16(12, 0, true);                // mod time
-    cd.setUint16(14, 0, true);                // mod date
-    cd.setUint32(16, crc, true);              // crc32
-    cd.setUint32(20, size, true);             // compressed size
-    cd.setUint32(24, size, true);             // uncompressed size
-    cd.setUint16(28, nameBytes.length, true); // name length
-    cd.setUint16(30, 0, true);                // extra length
-    cd.setUint16(32, 0, true);                // comment length
-    cd.setUint16(34, 0, true);                // disk number
-    cd.setUint16(36, 0, true);                // internal attrs
-    cd.setUint32(38, 0, true);                // external attrs
-    cd.setUint32(42, offset, true);           // local header offset
-    central.push({ header: new Uint8Array(cd.buffer), name: nameBytes });
-
-    offset += 30 + nameBytes.length + size;
-  });
-
-  const centralStart = offset;
-  let centralSize = 0;
-  central.forEach(c => {
-    chunks.push(c.header, c.name);
-    centralSize += c.header.length + c.name.length;
-  });
-
-  const eocd = new DataView(new ArrayBuffer(22));
-  eocd.setUint32(0, 0x06054b50, true);        // end of central dir signature
-  eocd.setUint16(4, 0, true);                 // disk number
-  eocd.setUint16(6, 0, true);                 // disk with central dir
-  eocd.setUint16(8, files.length, true);      // entries on this disk
-  eocd.setUint16(10, files.length, true);     // total entries
-  eocd.setUint32(12, centralSize, true);      // central dir size
-  eocd.setUint32(16, centralStart, true);     // central dir offset
-  eocd.setUint16(20, 0, true);                // comment length
-  chunks.push(new Uint8Array(eocd.buffer));
-
-  return new Blob(chunks, { type: 'application/zip' });
-}
-
-function downloadAllStash() {
-  if (stashItems.length === 0) {
-    showToast('暂存区为空');
-    return;
-  }
-  try {
-    const files = stashItems.map((item, idx) => ({
-      name: `${idx + 1}.png`,
-      data: dataUrlToBytes(item.dataUrl)
-    }));
-    const blob = buildZip(files);
-    const link = document.createElement('a');
-    link.download = `morton_images_${Date.now()}.zip`;
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 2000);
-    showToast(`已打包下载 ${files.length} 张图片`);
-  } catch (err) {
-    console.error(err);
-    showToast('打包失败，请重试');
-  }
 }
 
 // --- Save to image ---
@@ -1321,25 +1115,22 @@ async function saveToImage() {
   renderCanvas();
 
   const canvas = document.getElementById('canvas');
-  canvas.classList.add('capturing');
 
   try {
     const c = await html2canvas(canvas, {
       scale: 1,
       useCORS: true,
-      backgroundColor: '#ffffff',
-      width: 1000,
+      backgroundColor: document.getElementById('canvasBgColor').value,
+      width: canvas.scrollWidth,
       height: canvas.scrollHeight
     });
-    canvas.classList.remove('capturing');
 
     const link = document.createElement('a');
     link.download = `morton_${Date.now()}.png`;
-    link.href = flattenWhite(c).toDataURL('image/png');
+    link.href = c.toDataURL('image/png');
     link.click();
     showToast('图片已保存');
   } catch (err) {
-    canvas.classList.remove('capturing');
     console.error(err);
     showToast('保存失败，请重试');
   }
