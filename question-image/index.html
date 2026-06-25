@@ -60,57 +60,84 @@
     }
 
     :root {
-      --primary: #4a6cf7;
-      --primary-hover: #3b5de7;
-      --danger: #e74c3c;
-      --danger-hover: #c0392b;
-      --success: #27ae60;
-      --bg: #f0f2f5;
+      --primary: #6366f1;
+      --primary-hover: #5457e5;
+      --accent2: #9333ea;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --bg: #f6f7fb;
       --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --text: #1a202c;
-      --text-secondary: #64748b;
-      --radius: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --border: rgba(17, 24, 39, 0.09);
+      --text: #16181d;
+      --text-secondary: #6b7280;
+      --radius: 10px;
+      --shadow: 0 2px 14px rgba(17, 24, 39, 0.06);
+      --shadow-md: 0 8px 24px rgba(17, 24, 39, 0.10);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     .app-header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
+      gap: 16px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       position: sticky;
       top: 0;
       z-index: 100;
     }
 
-    .app-header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--primary);
+    .back {
+      flex-shrink: 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
     }
+    .back:hover { color: var(--text); border-color: var(--primary); }
+
+    .title-wrap h1 {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(120deg, #4f46e5, #9333ea 55%, #db2777);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .title-wrap p { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary); }
+
+    .spacer { flex: 1; }
 
     .header-hint {
-      font-size: 13px;
+      font-size: 12.5px;
       color: var(--text-secondary);
     }
 
     .app-layout {
       display: flex;
-      height: calc(100vh - 53px);
+      flex: 1;
+      min-height: 0;
       overflow: hidden;
     }
 
@@ -184,11 +211,11 @@
     .btn:hover { border-color: var(--primary); color: var(--primary); }
 
     .btn-primary {
-      background: var(--primary);
+      background: linear-gradient(120deg, var(--primary), var(--accent2));
       color: #fff;
-      border-color: var(--primary);
+      border-color: transparent;
     }
-    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .btn-primary:hover { filter: brightness(1.06); color: #fff; border-color: transparent; }
 
     .btn-sm {
       padding: 4px 10px;
@@ -305,7 +332,7 @@
     .form-group input:focus,
     .form-group textarea:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(74,108,247,0.15);
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
     }
 
     .form-group textarea {
@@ -347,11 +374,11 @@
     .right-panel {
       flex: 1;
       overflow: auto;
-      padding: 20px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: #e8ecf1;
+      background: var(--bg);
     }
 
     .save-bar {
@@ -386,6 +413,7 @@
     .preview-wrapper {
       padding: 0;
       display: inline-block;
+      box-shadow: 0 6px 20px rgba(17, 24, 39, 0.10);
     }
 
     /* Stash (clipboard) area */
@@ -544,10 +572,15 @@
 </head>
 <body>
 
-<div class="app-header">
-  <h1>猫凳题目图片生成工具</h1>
+<header class="app-header">
+  <a class="back" href="../">← 猫凳系统</a>
+  <div class="title-wrap">
+    <h1>猫凳题目图片生成工具</h1>
+    <p>题目一键生成图片</p>
+  </div>
+  <span class="spacer"></span>
   <span class="header-hint">添加文本和图片元素，拖拽调整位置，导出为图片</span>
-</div>
+</header>
 
 <div class="app-layout">
   <!-- Left Panel: Editor Controls -->
