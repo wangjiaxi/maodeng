@@ -433,9 +433,9 @@
     }
     .stash-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      grid-template-columns: repeat(5, 1fr);
       gap: 10px;
-      max-height: 200px;
+      max-height: 420px;
       overflow-y: auto;
       padding-right: 4px;
     }
@@ -445,7 +445,18 @@
       border-radius: 6px;
       overflow: hidden;
       background: var(--card-bg);
-      transition: box-shadow 0.15s;
+      transition: box-shadow 0.15s, outline 0.15s;
+    }
+    .stash-item.selected { outline: 2px solid var(--primary); outline-offset: -2px; }
+    .stash-check {
+      position: absolute; top: 7px; left: 7px; z-index: 3;
+      width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);
+      background: rgba(255, 255, 255, 0.92); border-radius: 4px;
+    }
+    .stash-num {
+      flex: 0 0 auto; display: flex; align-items: center; padding: 0 8px;
+      font-size: 11px; font-weight: 600; color: var(--primary);
+      border-right: 1px solid var(--border); font-variant-numeric: tabular-nums;
     }
     .stash-item:hover {
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -631,7 +642,13 @@
     <div class="stash-section">
       <div class="stash-section-header">
         <span>剪贴板</span>
-        <span id="stashCount" style="font-weight:normal;color:var(--text-secondary);font-size:12px;"></span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <label id="stashSelectAllWrap" style="display:none;align-items:center;gap:5px;font-weight:400;font-size:12.5px;color:var(--text-secondary);cursor:pointer;">
+            <input type="checkbox" id="stashSelectAll" onchange="toggleStashSelectAll()" style="cursor:pointer;accent-color:var(--primary);"> 全选
+          </label>
+          <span id="stashCount" style="font-weight:normal;color:var(--text-secondary);font-size:12px;"></span>
+          <button class="btn btn-sm btn-primary" id="stashZipBtn" onclick="downloadSelectedZip()" style="display:none;">打包下载</button>
+        </div>
       </div>
       <div class="stash-grid" id="stashGrid">
         <div class="stash-empty" id="stashEmpty">点击「暂存」保存当前画布快照</div>
@@ -1095,7 +1112,8 @@ async function stashCanvas() {
     stashItems.push({
       id: stashNextId++,
       dataUrl: c.toDataURL('image/png'),
-      time: new Date().toLocaleTimeString()
+      time: new Date().toLocaleTimeString(),
+      selected: true
     });
     renderStash();
     showToast('已暂存到剪贴板');
@@ -1112,18 +1130,32 @@ async function stashCanvas() {
 function renderStash() {
   const grid = document.getElementById('stashGrid');
   const count = document.getElementById('stashCount');
+  const selAllWrap = document.getElementById('stashSelectAllWrap');
+  const selAll = document.getElementById('stashSelectAll');
+  const zipBtn = document.getElementById('stashZipBtn');
   if (stashItems.length === 0) {
     grid.innerHTML = '<div class="stash-empty">点击「暂存」保存当前画布快照</div>';
     count.textContent = '';
+    selAllWrap.style.display = 'none';
+    zipBtn.style.display = 'none';
     return;
   }
+  const selCount = stashItems.filter(s => s.selected).length;
   count.textContent = stashItems.length + ' 项';
+  selAllWrap.style.display = 'inline-flex';
+  selAll.checked = selCount === stashItems.length;
+  zipBtn.style.display = '';
+  zipBtn.textContent = selCount ? `打包下载（${selCount}）` : '打包下载';
+  zipBtn.disabled = selCount === 0;
   let html = '';
-  stashItems.forEach(item => {
-    html += `<div class="stash-item">
-      <img src="${item.dataUrl}" title="${item.time}" onclick="downloadStash(${item.id})">
+  stashItems.forEach((item, idx) => {
+    const seq = idx + 1;
+    html += `<div class="stash-item${item.selected ? ' selected' : ''}">
+      <input type="checkbox" class="stash-check" ${item.selected ? 'checked' : ''} onclick="toggleStashSelect(${item.id})">
+      <img src="${item.dataUrl}" title="${seq}.png" onclick="downloadStash(${item.id})">
       <div class="stash-item-actions">
-        <button onclick="downloadStash(${item.id})" title="下载">下载</button>
+        <span class="stash-num">${seq}.png</span>
+        <button onclick="downloadStash(${item.id})" title="下载 ${seq}.png">下载</button>
         <button class="stash-delete" onclick="removeStash(${item.id})" title="删除">删除</button>
       </div>
     </div>`;
@@ -1131,18 +1163,130 @@ function renderStash() {
   grid.innerHTML = html;
 }
 
-function downloadStash(id) {
+function toggleStashSelect(id) {
   const item = stashItems.find(s => s.id === id);
-  if (!item) return;
+  if (item) item.selected = !item.selected;
+  renderStash();
+}
+
+function toggleStashSelectAll() {
+  const checked = document.getElementById('stashSelectAll').checked;
+  stashItems.forEach(s => s.selected = checked);
+  renderStash();
+}
+
+function downloadStash(id) {
+  const idx = stashItems.findIndex(s => s.id === id);
+  if (idx < 0) return;
   const link = document.createElement('a');
-  link.download = `morton_stash_${id}_${Date.now()}.png`;
-  link.href = item.dataUrl;
+  link.download = `${idx + 1}.png`;
+  link.href = stashItems[idx].dataUrl;
   link.click();
 }
 
 function removeStash(id) {
   stashItems = stashItems.filter(s => s.id !== id);
   renderStash();
+}
+
+// --- 打包下载（ZIP，store / 不压缩）---
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function crc32(bytes) {
+  let crc = -1;
+  for (let i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
+  return (crc ^ -1) >>> 0;
+}
+function dataUrlToBytes(dataUrl) {
+  const binary = atob(dataUrl.split(',')[1]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function buildZip(files) {
+  const encoder = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  files.forEach(file => {
+    const nameBytes = encoder.encode(file.name);
+    const data = file.data;
+    const crc = crc32(data);
+    const size = data.length;
+    const header = new DataView(new ArrayBuffer(30));
+    header.setUint32(0, 0x04034b50, true);
+    header.setUint16(4, 20, true);
+    header.setUint16(6, 0, true);
+    header.setUint16(8, 0, true);
+    header.setUint16(10, 0, true);
+    header.setUint16(12, 0, true);
+    header.setUint32(14, crc, true);
+    header.setUint32(18, size, true);
+    header.setUint32(22, size, true);
+    header.setUint16(26, nameBytes.length, true);
+    header.setUint16(28, 0, true);
+    chunks.push(new Uint8Array(header.buffer), nameBytes, data);
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint16(8, 0, true);
+    cd.setUint16(10, 0, true);
+    cd.setUint16(12, 0, true);
+    cd.setUint16(14, 0, true);
+    cd.setUint32(16, crc, true);
+    cd.setUint32(20, size, true);
+    cd.setUint32(24, size, true);
+    cd.setUint16(28, nameBytes.length, true);
+    cd.setUint16(30, 0, true);
+    cd.setUint16(32, 0, true);
+    cd.setUint16(34, 0, true);
+    cd.setUint16(36, 0, true);
+    cd.setUint32(38, 0, true);
+    cd.setUint32(42, offset, true);
+    central.push({ header: new Uint8Array(cd.buffer), name: nameBytes });
+    offset += 30 + nameBytes.length + size;
+  });
+  const centralStart = offset;
+  let centralSize = 0;
+  central.forEach(c => { chunks.push(c.header, c.name); centralSize += c.header.length + c.name.length; });
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(4, 0, true);
+  eocd.setUint16(6, 0, true);
+  eocd.setUint16(8, files.length, true);
+  eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, centralSize, true);
+  eocd.setUint32(16, centralStart, true);
+  eocd.setUint16(20, 0, true);
+  chunks.push(new Uint8Array(eocd.buffer));
+  return new Blob(chunks, { type: 'application/zip' });
+}
+function downloadSelectedZip() {
+  const files = [];
+  stashItems.forEach((item, idx) => {
+    if (item.selected) files.push({ name: `${idx + 1}.png`, data: dataUrlToBytes(item.dataUrl) });
+  });
+  if (files.length === 0) { showToast('请先勾选要下载的图片'); return; }
+  try {
+    const blob = buildZip(files);
+    const link = document.createElement('a');
+    link.download = `morton_images_${Date.now()}.zip`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+    showToast(`已打包下载 ${files.length} 张图片`);
+  } catch (err) {
+    console.error(err);
+    showToast('打包失败，请重试');
+  }
 }
 
 // --- Save to image ---
