@@ -463,6 +463,8 @@
       position: relative;
       overflow: hidden;
     }
+    /* 导出/暂存截图时隐藏图片右下角的缩放手柄（蓝色三角） */
+    #canvas.capturing .resize-handle { display: none !important; }
 
     .canvas-element {
       position: absolute;
@@ -1047,6 +1049,7 @@ async function stashCanvas() {
   renderCanvas();
 
   const canvas = document.getElementById('canvas');
+  canvas.classList.add('capturing');
   try {
     const c = await html2canvas(canvas, {
       scale: 1,
@@ -1055,6 +1058,7 @@ async function stashCanvas() {
       width: canvas.scrollWidth,
       height: canvas.scrollHeight
     });
+    canvas.classList.remove('capturing');
     stashItems.push({
       id: stashNextId++,
       dataUrl: c.toDataURL('image/png'),
@@ -1063,6 +1067,7 @@ async function stashCanvas() {
     renderStash();
     showToast('已暂存到剪贴板');
   } catch (err) {
+    canvas.classList.remove('capturing');
     console.error(err);
     showToast('暂存失败');
   }
@@ -1115,6 +1120,7 @@ async function saveToImage() {
   renderCanvas();
 
   const canvas = document.getElementById('canvas');
+  canvas.classList.add('capturing');
 
   try {
     const c = await html2canvas(canvas, {
@@ -1124,6 +1130,7 @@ async function saveToImage() {
       width: canvas.scrollWidth,
       height: canvas.scrollHeight
     });
+    canvas.classList.remove('capturing');
 
     const link = document.createElement('a');
     link.download = `morton_${Date.now()}.png`;
@@ -1131,6 +1138,7 @@ async function saveToImage() {
     link.click();
     showToast('图片已保存');
   } catch (err) {
+    canvas.classList.remove('capturing');
     console.error(err);
     showToast('保存失败，请重试');
   }
